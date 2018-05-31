@@ -38,10 +38,10 @@ TEST_TARGET = test/$(COMPONENT_NAME)_tests
 CPPUTEST_HOME = C:/Users/griff/git/cpputest
 
 # a directory where o and d files go
-CPPUTEST_OBJS_DIR := test/build/obj
+CPPUTEST_OBJS_DIR := test/build/
 
 # a directory where libs go
-CPPUTEST_LIB_DIR := test/build/lib
+CPPUTEST_LIB_DIR := test/build/
 
 CPPUTEST_USE_EXTENSIONS = Y
 
@@ -53,6 +53,6 @@ CPPUTEST_CXXFLAGS += \
 CXXFLAGS += -include $(CPPUTEST_HOME)/include/CppUTest/MemoryLeakDetectorNewMacros.h
 CFLAGS += -include $(CPPUTEST_HOME)/include/CppUTest/MemoryLeakDetectorMallocMacros.h
 
-LD_LIBRARIES += -L$(CPPUTEST_HOME)/lib -lCppUTest -lCppUTestExt -lpthread
+LD_LIBRARIES += -Ltest/lib -lCppUTest -lCppUTestExt -lpthread
 
 include test/MakefileWorker.mk
