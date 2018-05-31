@@ -1,0 +1,6 @@
+# generated directories
+build
+test/build
+
+# generated files
+*.exe
