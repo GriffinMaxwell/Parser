@@ -38,10 +38,10 @@ TEST_TARGET = test/$(COMPONENT_NAME)_tests
 CPPUTEST_HOME = C:/Users/griff/git/cpputest
 
 # a directory where o and d files go
-CPPUTEST_OBJS_DIR := test/build/
+CPPUTEST_OBJS_DIR := test/build
 
 # a directory where libs go
-CPPUTEST_LIB_DIR := test/build/
+CPPUTEST_LIB_DIR := test/build
 
 CPPUTEST_USE_EXTENSIONS = Y
 

@@ -14,6 +14,9 @@ OBJS := $(SRCS:%.c=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
 # Rules
+all: $(OBJS)
+	$(CC) $^
+
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEPS)
 endif
@@ -27,10 +30,7 @@ $(BUILD_DIR)/%.o: %.c
 	@echo "Compiling $<..."
 	@$(CC) -c $< -o $@
 
-.PHONY: clean all
-all: $(OBJS)
-	$(CC) $^
-
+.PHONY: clean
 clean:
 	@rm -rf $(BUILD_DIR)/*/
 	@echo "Build directory is clean."
