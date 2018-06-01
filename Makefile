@@ -6,7 +6,8 @@ MKDIR_P ?= mkdir -p
 # Directories
 BUILD_DIR := build
 SRC_DIRS := \
-	source
+	source \
+	source/util
 
 # File lists
 SRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.c)
@@ -15,7 +16,8 @@ DEPS := $(OBJS:.o=.d)
 
 # Rules
 all: $(OBJS)
-	$(CC) $^
+	@echo "Linking objects..."
+	@$(CC) $^
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEPS)

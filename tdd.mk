@@ -32,7 +32,7 @@ MOCKS_SRC_DIRS := \
 COMPONENT_NAME = Parser
 
 # Name of the test executable
-TEST_TARGET = test/$(COMPONENT_NAME)_tests
+TEST_TARGET = test/$(COMPONENT_NAME)_test_target
 
 # Where CppUTest home dir found
 CPPUTEST_HOME = C:/Users/griff/git/cpputest
