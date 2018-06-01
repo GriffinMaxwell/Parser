@@ -17,7 +17,6 @@ SRC_DIRS := \
 
 # Specific source files to build into library. Helpful when not all code in a directory can be built for test (hopefully a temporary situation)
 SRC_FILES := \
-	source/Parser.c
 
 # Directories containing unit test code build into the unit test runner
 TEST_SRC_DIRS := \
