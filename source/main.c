@@ -31,7 +31,7 @@ void main(int argc, char *argv[])
          fflush(stdout);
       }
 
-      // Parse the buffer and return the list of tokens
+      // Lex the buffer and return the list of tokens
       // Print the list of tokens
    }
 
