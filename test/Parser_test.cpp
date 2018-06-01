@@ -12,7 +12,7 @@ TEST_GROUP(Parser)
    }
 };
 
-TEST(Parser, FailImmediately)
+IGNORE_TEST(Parser, FailImmediately)
 {
    FAIL("Immediately");
 }

@@ -8,12 +8,16 @@ endif
 ####################
 # Directories used to search for include files.
 INCLUDE_DIRS := \
+	source \
+	source/util
 
 # Directories containing source files to build into the library
 SRC_DIRS := \
+	source/util
 
 # Specific source files to build into library. Helpful when not all code in a directory can be built for test (hopefully a temporary situation)
 SRC_FILES := \
+	source/Parser.c
 
 # Directories containing unit test code build into the unit test runner
 TEST_SRC_DIRS := \
@@ -44,14 +48,23 @@ CPPUTEST_OBJS_DIR := test/build
 CPPUTEST_LIB_DIR := test/build
 
 CPPUTEST_USE_EXTENSIONS = Y
+CPPUTEST_WARNINGFLAGS =
+CPPUTEST_PEDANTIC_ERRORS = N
 
 # Flags
 CPPUTEST_CXXFLAGS += \
 	-I$(CPPUTEST_HOME)/include/CppUTest \
 	-I$(CPPUTEST_HOME)/include/CppUTestExt \
 
-CXXFLAGS += -include $(CPPUTEST_HOME)/include/CppUTest/MemoryLeakDetectorNewMacros.h
-CFLAGS += -include $(CPPUTEST_HOME)/include/CppUTest/MemoryLeakDetectorMallocMacros.h
+# Silence all warnings (because they are annoying)
+CPPUTEST_CPPFLAGS += -w -fpermissive
+CPPUTEST_FLAGS += -w
+
+CXXFLAGS += \
+	-include $(CPPUTEST_HOME)/include/CppUTest/MemoryLeakDetectorNewMacros.h
+
+CFLAGS += \
+	-include $(CPPUTEST_HOME)/include/CppUTest/MemoryLeakDetectorMallocMacros.h \
 
 LD_LIBRARIES += -Ltest/lib -lCppUTest -lCppUTestExt -lpthread
 
