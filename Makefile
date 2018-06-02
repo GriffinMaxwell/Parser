@@ -14,6 +14,9 @@ SRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.c)
 OBJS := $(SRCS:%.c=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
+# Compiler parameters
+CC_INCL_DIRS := $(SRC_DIRS:%=-I%)
+
 # Rules
 all: $(OBJS)
 	@echo "Linking objects..."
@@ -30,7 +33,7 @@ $(BUILD_DIR)/%.d: %.c
 $(BUILD_DIR)/%.o: %.c
 	@$(MKDIR_P) $(dir $@)
 	@echo "Compiling $<..."
-	@$(CC) -c $< -o $@
+	@$(CC) -c $< $(CC_INCL_DIRS) -o $@
 
 .PHONY: clean
 clean:
