@@ -17,6 +17,7 @@ SRC_DIRS := \
 
 # Specific source files to build into library. Helpful when not all code in a directory can be built for test (hopefully a temporary situation)
 SRC_FILES := \
+	source/Lexer_Concrete.c
 
 # Directories containing unit test code build into the unit test runner
 TEST_SRC_DIRS := \
@@ -27,6 +28,7 @@ TEST_SRC_FILES := \
 
 # Directories containing mock source files to build into the test runner
 MOCKS_SRC_DIRS := \
+	test/util
 
 ####################
 #--- How and Where
@@ -52,6 +54,7 @@ CPPUTEST_PEDANTIC_ERRORS = N
 
 # Flags
 CPPUTEST_CXXFLAGS += \
+	-I$(CPPUTEST_HOME)/include \
 	-I$(CPPUTEST_HOME)/include/CppUTest \
 	-I$(CPPUTEST_HOME)/include/CppUTestExt \
 
