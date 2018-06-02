@@ -18,7 +18,7 @@ SRC_DIRS := \
 # Specific source files to build into library. Helpful when not all code in a directory can be built for test (hopefully a temporary situation)
 SRC_FILES := \
 	source/Lexer_Concrete.c
-	
+
 # Directories containing unit test code build into the unit test runner
 TEST_SRC_DIRS := \
 	test
@@ -28,6 +28,7 @@ TEST_SRC_FILES := \
 
 # Directories containing mock source files to build into the test runner
 MOCKS_SRC_DIRS := \
+	test/util
 
 ####################
 #--- How and Where

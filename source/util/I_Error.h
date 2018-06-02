@@ -16,7 +16,7 @@ typedef struct I_Error_t
    void (*report)(struct I_Error_t *interface, const char *message);
 } I_Error_t;
 
-#define Error_Report((interface), (message)) \
+#define Error_Report(interface, message) \
    (interface)->report((interface), (message))
-   
+
 #endif
