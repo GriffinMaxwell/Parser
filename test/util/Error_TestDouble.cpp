@@ -10,7 +10,7 @@ extern "C"
    #include "util.h"
 }
 
-void report(I_Error_t *interface, const char *message)
+static void report(I_Error_t *interface, const char *message)
 {
    REINTERPRET(instance, interface, Error_TestDouble_t *);
 

@@ -54,6 +54,7 @@ CPPUTEST_PEDANTIC_ERRORS = N
 
 # Flags
 CPPUTEST_CXXFLAGS += \
+	-I$(CPPUTEST_HOME)/include \
 	-I$(CPPUTEST_HOME)/include/CppUTest \
 	-I$(CPPUTEST_HOME)/include/CppUTestExt \
 
