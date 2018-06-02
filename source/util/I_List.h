@@ -17,7 +17,7 @@ typedef struct I_List_t
    void (*at)(struct I_List_t *interface, size_t index, void **item);
 
    /*
-    * Sets the item at the specified index.
+    * Sets the item at the specified index with a deep copy.
     *
     * @post Resizes list to guarantee index is valid location.
     */

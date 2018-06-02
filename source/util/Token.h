@@ -54,18 +54,18 @@ enum
 
    // Unknown
    Token_Type_Unknown
-}
+};
 typedef uint8_t Token_Type_t;
 
 typedef struct
 {
    Token_Type_t type;
-   
+
    union
    {
       char *lexeme;
       long value;
-   }
+   };
 } Token_t;
 
 #endif

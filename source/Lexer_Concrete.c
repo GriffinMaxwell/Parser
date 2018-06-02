@@ -3,13 +3,18 @@
  */
 
 #include "Lexer_Concrete.h"
+#include "Token.h"
 #include "util.h"
 
-static void lex(I_Lexer_t *interface, const char *source, I_List_t *tokens)
+static void lex(I_Lexer_t *interface, const char *source, I_List_t *tokenList)
 {
-   REINTERPRET(instance, interface, Lexer_Concrete_t *);
+   Token_t token = {
+      .type = Token_Type_Paren_Left,
+   };
 
-   Error_Report(instance->errorHandler, "Lexer doesn't do anything yet.");
+   List_Add(tokenList, &token);
+
+   // Error_Report(instance->errorHandler, "Lexer doesn't do anything yet.");
 }
 
 void Lexer_Concrete_Init(Lexer_Concrete_t *instance, I_Error_t *errorHandler)
