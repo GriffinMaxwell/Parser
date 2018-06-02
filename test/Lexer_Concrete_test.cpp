@@ -20,6 +20,11 @@ TEST_GROUP(Lexer_Concrete)
    }
 };
 
+TEST(Lexer_Concrete, ImmediatelyThrowsError)
+{
+   
+}
+
 TEST(Lexer_Concrete, FailImmediately)
 {
    FAIL("Immediately");
