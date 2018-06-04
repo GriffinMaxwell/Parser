@@ -4,6 +4,7 @@
 
 #include <stdbool.h>
 #include <ctype.h>
+#include <string.h>
 #include "Lexer_Concrete.h"
 #include "Token.h"
 #include "util.h"
@@ -180,9 +181,9 @@ static bool isSingleCharacterSymbol(char current)
    return singleSymbolSyntaxRules[current].isValid;
 }
 
+static Token_t singleCharacterSymbol; // Declared outside to ensure initialized to zero 
 static void ConsumeSingleCharacterSymbol(char current, I_List_t *tokenList)
 {
-   Token_t singleCharacterSymbol;
    singleCharacterSymbol.type = singleSymbolSyntaxRules[current].tokenType;
    singleCharacterSymbol.value = 0;
 

@@ -38,38 +38,18 @@ TEST_GROUP(Lexer_Concrete)
          .withParameter("message", message);
    }
 
-   void TheTokenTypeAtThisIndexShouldBe(size_t index, const Token_Type_t expectedTokenType)
+   void TheTokenAtThisIndexShouldBe(size_t index, Token_t *expectedToken)
    {
       Token_t *actualToken;
       List_At(&tokens.interface, index, &actualToken);
-
-      CHECK_EQUAL(expectedTokenType, actualToken->type);
+      MEMCMP_EQUAL(expectedToken, actualToken, sizeof(Token_t));
    }
 
-
-   void TheTokenTypeAndLexemeAtThisIndexShouldBe(size_t index, const Token_t *expectedToken)
-   {
-      Token_t *actualToken;
-      List_At(&tokens.interface, index, &actualToken);
-
-      CHECK_EQUAL(expectedToken->type, actualToken->type);
-      STRCMP_EQUAL(expectedToken->lexeme, actualToken->lexeme);
-   }
-
-   void TheTokenTypeAndValueAtThisIndexShouldBe(size_t index, const Token_t *expectedToken)
-   {
-      Token_t *actualToken;
-      List_At(&tokens.interface, index, &actualToken);
-
-      CHECK_EQUAL(expectedToken->type, actualToken->type);
-      CHECK_EQUAL(expectedToken->value, actualToken->value);
-   }
-
-   void TheTokenTypesForThisListOfTokensShouldBe(const Token_Type_t *tokens, size_t length)
+   void TheLexedListOfTokensShouldBe(const Token_t *expectedTokens, size_t length)
    {
       for(int i = 0; i < length; i++)
       {
-         TheTokenTypeAtThisIndexShouldBe(i, tokens[i]);
+         TheTokenAtThisIndexShouldBe(i, &expectedTokens[i]);
       }
    }
 };
@@ -78,91 +58,41 @@ TEST_GROUP(Lexer_Concrete)
  * Single token tests
  ***************************/
 
-TEST(Lexer_Concrete, RecognizesLeftParen)
+IGNORE_TEST(Lexer_Concrete, RecognizesRightCurlyBrace)
 {
-   const Token_Type_t expectedTokenType = Token_Type_Paren_Left;
-
-   Lexer_Lex(&lexer.interface, "(", &tokens.interface);
-   TheTokenTypeAtThisIndexShouldBe(0, expectedTokenType);
-}
-
-TEST(Lexer_Concrete, RecognizesRightParen)
-{
-   const Token_Type_t expectedTokenType = Token_Type_Paren_Right;
-
-   Lexer_Lex(&lexer.interface, ")", &tokens.interface);
-   TheTokenTypeAtThisIndexShouldBe(0, expectedTokenType);
-}
-
-TEST(Lexer_Concrete, RecognizesLeftSquareBrace)
-{
-   const Token_Type_t expectedTokenType = Token_Type_SquareBrace_Left;
-
-   Lexer_Lex(&lexer.interface, "[", &tokens.interface);
-   TheTokenTypeAtThisIndexShouldBe(0, expectedTokenType);
-}
-
-TEST(Lexer_Concrete, RecognizesRightSquareBrace)
-{
-   const Token_Type_t expectedTokenType = Token_Type_SquareBrace_Right;
-
-   Lexer_Lex(&lexer.interface, "]", &tokens.interface);
-   TheTokenTypeAtThisIndexShouldBe(0, expectedTokenType);
-}
-
-TEST(Lexer_Concrete, RecognizesLeftCurlyBrace)
-{
-   const Token_Type_t expectedTokenType = Token_Type_CurlyBrace_Left;
-
-   Lexer_Lex(&lexer.interface, "{", &tokens.interface);
-   TheTokenTypeAtThisIndexShouldBe(0, expectedTokenType);
-}
-
-TEST(Lexer_Concrete, RecognizesRightCurlyBrace)
-{
-   const Token_Type_t expectedTokenType = Token_Type_CurlyBrace_Right;
+   const Token_t expectedToken = { Token_Type_CurlyBrace_Right, 0 };
 
    Lexer_Lex(&lexer.interface, "}", &tokens.interface);
-   TheTokenTypeAtThisIndexShouldBe(0, expectedTokenType);
+   TheTokenAtThisIndexShouldBe(0, &expectedToken);
 }
 
 /***************************
- * String of symbolic tokens tests
+ * Symbolic tokens tests
  ***************************/
 
 TEST(Lexer_Concrete, RecognizesStringOfNonSpacedTokens)
 {
    const char *source = "()[]{},.`";
-   const Token_Type_t expectedTokens[] = {
-      Token_Type_Paren_Left,
-      Token_Type_Paren_Right,
-      Token_Type_SquareBrace_Left,
-      Token_Type_SquareBrace_Right,
-      Token_Type_CurlyBrace_Left,
-      Token_Type_CurlyBrace_Right,
-      Token_Type_Comma,
-      Token_Type_Dot,
-      Token_Type_Backtick
+   const Token_t expectedTokens[] = {
+      { Token_Type_Paren_Left, 0 },
+      { Token_Type_Paren_Right, 0 },
+      { Token_Type_SquareBrace_Left, 0 },
+      { Token_Type_SquareBrace_Right, 0 },
+      { Token_Type_CurlyBrace_Left, 0 },
+      { Token_Type_CurlyBrace_Right, 0 },
+      { Token_Type_Comma, 0 },
+      { Token_Type_Dot, 0 },
+      { Token_Type_Backtick, 0 }
    };
 
    Lexer_Lex(&lexer.interface, source, &tokens.interface);
-   TheTokenTypesForThisListOfTokensShouldBe(expectedTokens, 9);
+   TheLexedListOfTokensShouldBe(expectedTokens, 9);
 }
 
 IGNORE_TEST(Lexer_Concrete, NoSpacesBetweenTokensRequiringWhitespaceReportsErrors)
 {
    const char *source = "?@#$:-+/*=<><=>=!===";
-   const Token_Type_t expectedTokens[] = {
-      Token_Type_Paren_Left,
-      Token_Type_Paren_Right,
-      Token_Type_SquareBrace_Left,
-      Token_Type_SquareBrace_Right,
-      Token_Type_CurlyBrace_Left,
-      Token_Type_CurlyBrace_Right,
-      Token_Type_Comma,
-      Token_Type_Dot,
-      Token_Type_Backtick
-   };
 
    ShouldReportThisError("Error");
+   Lexer_Lex(&lexer.interface, source, &tokens.interface);
 }
