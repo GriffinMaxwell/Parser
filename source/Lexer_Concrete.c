@@ -183,64 +183,8 @@ static bool isSingleCharacterSymbol(char current)
 static void ConsumeSingleCharacterSymbol(char current, I_List_t *tokenList)
 {
    Token_t singleCharacterSymbol;
-   switch(current)
-   {
-      case '(':
-         singleCharacterSymbol.type = Token_Type_Paren_Left;
-         singleCharacterSymbol.value = 0;
-         break;
-      case ')':
-         singleCharacterSymbol.type = Token_Type_Paren_Right;
-         singleCharacterSymbol.value = 0;
-         break;
-      case '[':
-         singleCharacterSymbol.type = Token_Type_SquareBrace_Left;
-         singleCharacterSymbol.value = 0;
-         break;
-      case ']':
-         singleCharacterSymbol.type = Token_Type_SquareBrace_Right;
-         singleCharacterSymbol.value = 0;
-         break;
-      case '{':
-         singleCharacterSymbol.type = Token_Type_CurlyBrace_Left;
-         singleCharacterSymbol.value = 0;
-         break;
-      case '}':
-         singleCharacterSymbol.type = Token_Type_CurlyBrace_Right;
-         singleCharacterSymbol.value = 0;
-         break;
-      case ',':
-         singleCharacterSymbol.type = Token_Type_Comma;
-         singleCharacterSymbol.value = 0;
-         break;
-      case '.':
-         singleCharacterSymbol.type = Token_Type_Dot;
-         singleCharacterSymbol.value = 0;
-         break;
-      case '`':
-         singleCharacterSymbol.type = Token_Type_Backtick;
-         singleCharacterSymbol.value = 0;
-         break;
-      case '@':
-         singleCharacterSymbol.type = Token_Type_Arroba;
-         singleCharacterSymbol.value = 0;
-         break;
-      case '#':
-         singleCharacterSymbol.type = Token_Type_Pound;
-         singleCharacterSymbol.value = 0;
-         break;
-      case '$':
-         singleCharacterSymbol.type = Token_Type_Dollar;
-         singleCharacterSymbol.value = 0;
-         break;
-      case ':':
-         singleCharacterSymbol.type = Token_Type_Colon;
-         singleCharacterSymbol.value = 0;
-         break;
-      default:
-         // Error_Report("Error: Token not yet implemented.");
-         break;
-   }
+   singleCharacterSymbol.type = singleSymbolSyntaxRules[current].tokenType;
+   singleCharacterSymbol.value = 0;
 
    List_Add(tokenList, &singleCharacterSymbol);
    AdvanceOne();
