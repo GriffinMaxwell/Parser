@@ -2,19 +2,15 @@
 
 Without going into too much detail about the language's grammar, this document will outline all of the syntax rules that the Lexer will follow to convert source code into meaningful tokens that can then be fed to the grammar rules of the parser.
 
----
-
 # Identifiers and Keywords
 
 **Identifiers** are all the "word-like" tokens in the language, including variables, functions, procedures, and type names. Meanwhile, **keywords** are reserved command words that have a special semantic meaning in the language.
 
-With a few exception (see [Special Identifiers](#special-identifiers)), all valid identifiers follow the form `[\w_-#!?]*[\w][\w_#-!?]*`, where `\w` are the word characters `[a-zA-Z]`. In other words, they must contain at least one word character, and any number of non-word characters `[_-#!?]`
+With a few exception (see [Special Types](#special-types)), all valid identifiers follow the form `[\w_-#!?]*[\w][\w_#-!?]*`, where `\w` are the word characters `[a-zA-Z]`. In other words, they must contain at least one word character, and any number of non-word characters `[_-#!?]`
 
 Syntactically, keywords are a subset of identifiers, formed by a series of word characters (`[\w]+`). During the lexing step, no distinction needs to be made between identifiers and keywords and the binding of these tokens will be handled later by the parser. So they will not be listed here.
 
 There are also a few built-in functions whose names are valid identifiers (e.g. `and`, `or`, and `not`). As with keywords, these will not be distinguished until the parsing step and will not be listed here.
-
----
 
 # Literals
 
@@ -54,8 +50,6 @@ Symbols are named constants with some underlying global value. They are useful f
 :so-is-this
 ```
 
----
-
 # "Symbolic" Tokens
 
 All other tokens are made of symbols and have one or more uses in the language. Some of these symbols must be spaced out with whitespace before and after to 1) improve readability and consistency of style across the language, or 2) remove ambiguity on characters that can be part of an identifier. Additionally, some tokens can be made up of repetitions of the same symbol. The table below gives each of the symbolic tokens and their syntactic rules.
@@ -87,13 +81,9 @@ Symbol | Spaced out? | Repeat?        | Can appear in an identifier?
 `>=`   | ✓           |                |
 `!=`   | ✓           |                |
 
----
-
 # Comments
 
 For now, there will be no comments in this language. Totally not because I don't feel like implementing them right now, but because this language is naturally self-documenting ;)
-
----
 
 # Special Types
 
@@ -109,8 +99,6 @@ Type         | Meaning                          | Example
 `=`          | Built-in TBD type                | `int[=]`
 `\[[0-9]+\]` | Built-in fixed-size array        | `int[20]`
 `\[\]`       | Built-in abstract container type | `int[]`
-
----
 
 # Unused characters
 
