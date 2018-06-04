@@ -190,7 +190,7 @@ static void ConsumeSingleCharacterSymbol(char current, I_List_t *tokenList)
    AdvanceOne();
 }
 
-static void HandleUnknownSymbolError(char current, I_Error_t * errorHandler, I_List_t *tokenList)
+static void ReportUnknownSymbolError(char current, I_Error_t * errorHandler, I_List_t *tokenList)
 {
    char message[26] = "Error: Invalid symbol ' '";
    message[24] = current;
@@ -216,9 +216,9 @@ static void lex(I_Lexer_t *interface, const char *source, I_List_t *tokenList)
    {
       if(isspace(current))
       {
-         // Do nothing.
+         AdvanceOne();
       }
-      if(isIdentifier(current))
+      else if(isIdentifier(current))
       {
          // ConsumeIdentifier();
       }
@@ -232,7 +232,7 @@ static void lex(I_Lexer_t *interface, const char *source, I_List_t *tokenList)
       }
       else
       {
-         HandleUnknownSymbolError(current, instance->errorHandler, tokenList);
+         ReportUnknownSymbolError(current, instance->errorHandler, tokenList);
       }
    }
 }

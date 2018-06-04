@@ -52,34 +52,37 @@ Symbols are named constants with some underlying global value. They are useful f
 
 # "Symbolic" Tokens
 
-All other tokens are made of symbols and have one or more uses in the language. Some of these symbols must be spaced out with whitespace before and after to 1) improve readability and consistency of style across the language, or 2) remove ambiguity on characters that can be part of an identifier. Additionally, some tokens can be made up of repetitions of the same symbol. The table below gives each of the symbolic tokens and their syntactic rules.
+All other tokens are made of one or more symbols and can have multiple uses in the language. Some of these symbols can appear directly adjacent to any other kind of token, including identifiers or literals. Meanwhile, many symbols are not allowed to appear next to an identifier or literal because 1) they cause ambiguity with identifier names or 2) enforcing consistent spacing around similar symbols will hopefully improve readability. Thus, these characters must either be surrounded by whitespace or other symbols that  The table below gives each of the symbolic tokens, their spacing rules, and whether they overlap with a valid identifier character.
 
-Symbol | Spaced out? | Repeat?        | Can appear in an identifier?
-:-----:|:-----------:|:--------------:|:---------------------------:
-`(`    |             |                |
-`)`    |             |                |
-`[`    |             |                |
-`]`    |             |                |
-`{`    |             |                |
-`}`    |             |                |
-`,`    |             |                |
-`.`    |             | ✓ (1, 2, or 3) |
-`?`    | ✓           | ✓ (unlimited)  | ✓
-\`     |             |                |
-`@`    | ✓           |                |
-`#`    | ✓           |                | ✓
-`$`    | ✓           |                |
-`:`    | ✓           |                | ✓
-`-`    | ✓           |                | ✓
-`+`    | ✓           |                |
-`/`    | ✓           |                |
-`*`    | ✓           |                |
-`=`    | ✓           | ✓ (1 or 2)     |
-`<`    | ✓           |                |
-`>`    | ✓           |                |
-`<=`   | ✓           |                |
-`>=`   | ✓           |                |
-`!=`   | ✓           |                |
+Symbol | Can appear next to any token? | Can appear in an identifier? | Notes
+:-----:|:-----------------------------:|:----------------------------:|:----:
+`(`    | ✓                             |                              |
+`)`    | ✓                             |                              |
+`[`    | ✓                             |                              |
+`]`    | ✓                             |                              |
+`{`    | ✓                             |                              |
+`}`    | ✓                             |                              |
+`,`    | ✓                             |                              |
+\`     | ✓                             |                              |
+`.`    | ✓                             |                              |
+`:`    | ✓                             |                              |
+`?`    |                               | ✓                            | Any length sequence of question marks is a single token
+`@`    |                               |                              |
+`#`    |                               | ✓                            |
+`$`    |                               |                              |
+`-`    |                               | ✓                            |
+`+`    |                               |                              |
+`/`    |                               |                              |
+`*`    |                               |                              |
+`=`    |                               |                              |
+`<`    |                               |                              |
+`>`    |                               |                              |
+`..`   |                               |                              |
+`...`  |                               |                              |
+`<=`   |                               |                              |
+`>=`   |                               |                              |
+`==`   |                               |                              |
+`!=`   |                               |                              |
 
 # Comments
 

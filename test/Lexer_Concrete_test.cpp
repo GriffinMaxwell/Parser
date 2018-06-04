@@ -30,7 +30,7 @@ TEST_GROUP(Lexer_Concrete)
       mock().clear();
    }
 
-   void ShouldThrowThisError(const char *message)
+   void ShouldReportThisError(const char *message)
    {
       mock()
          .expectOneCall("report")
@@ -127,25 +127,42 @@ TEST(Lexer_Concrete, RecognizesRightCurlyBrace)
 }
 
 /***************************
- * String of single token tests
+ * String of symbolic tokens tests
  ***************************/
 
-TEST(Lexer_Concrete, RecognizesStringOfSimpleTokens)
+TEST(Lexer_Concrete, RecognizesStringOfNonSpacedTokens)
 {
+   const char *source = "()[]{},.`";
    const Token_Type_t expectedTokens[] = {
-      Token_Type_CurlyBrace_Right,
-      Token_Type_CurlyBrace_Left,
+      Token_Type_Paren_Left,
+      Token_Type_Paren_Right,
       Token_Type_SquareBrace_Left,
-      Token_Type_Arroba,
+      Token_Type_SquareBrace_Right,
+      Token_Type_CurlyBrace_Left,
+      Token_Type_CurlyBrace_Right,
       Token_Type_Comma,
-      Token_Type_Backtick,
+      Token_Type_Dot,
+      Token_Type_Backtick
    };
 
-   Lexer_Lex(&lexer.interface, "}{[@,`", &tokens.interface);
-   TheTokenTypesForThisListOfTokensShouldBe(expectedTokens, 6);
+   Lexer_Lex(&lexer.interface, source, &tokens.interface);
+   TheTokenTypesForThisListOfTokensShouldBe(expectedTokens, 9);
 }
 
-// TEST(Lexer_Concrete, FailImmediately)
-// {
-//    FAIL("Immediately");
-// }
+IGNORE_TEST(Lexer_Concrete, NoSpacesBetweenTokensRequiringWhitespaceReportsErrors)
+{
+   const char *source = "?@#$:-+/*=<><=>=!===";
+   const Token_Type_t expectedTokens[] = {
+      Token_Type_Paren_Left,
+      Token_Type_Paren_Right,
+      Token_Type_SquareBrace_Left,
+      Token_Type_SquareBrace_Right,
+      Token_Type_CurlyBrace_Left,
+      Token_Type_CurlyBrace_Right,
+      Token_Type_Comma,
+      Token_Type_Dot,
+      Token_Type_Backtick
+   };
+
+   ShouldReportThisError("Error");
+}
