@@ -46,10 +46,7 @@ enum
    // Multi-character Symbols
    Token_Type_LessEqual,
    Token_Type_GreaterEqual,
-   Token_Type_EqualEqual,
    Token_Type_BangEqual,
-   Token_Type_DotDot,
-   Token_Type_DotDotDot,
 
    // Unknown
    Token_Type_Unknown
