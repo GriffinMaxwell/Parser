@@ -83,7 +83,7 @@ static void FillSymbolSyntaxRuleArray()
    symbolSyntaxRules['$'].isIdentifierCharacter = false;
 
    symbolSyntaxRules[':'].tokenType = Token_Type_Colon;
-   symbolSyntaxRules[':'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules[':'].canAppearNextToAnyToken = true;
    symbolSyntaxRules[':'].isSymbol = true;
    symbolSyntaxRules[':'].isIdentifierCharacter = false;
 
@@ -132,7 +132,7 @@ static inline char PeekPrevious(const char *source)
 {
    if(sourceStringCharacterPointer == source)
    {
-      return '\0';   // Return null terminator if at the beginning of the string
+      return ' ';   // Return space if at the beginning of the string
    }
    else
    {
@@ -152,7 +152,7 @@ static inline char PeekNext()
 
 static inline char PeekAhead(size_t ahead)
 {
-   return sourceStringCharacterPointer[ahead];
+   return (sourceStringCharacterPointer[ahead] == '\0') ? ' ' : sourceStringCharacterPointer[ahead];
 }
 
 static bool isIdentifier(char current)
@@ -209,40 +209,68 @@ static bool isSingleCharacterSymbol(char current)
    return symbolSyntaxRules[current].isSymbol;  // Multi character symbols already been eliminated
 }
 
-static void ConsumeSingleCharacterSymbol(char current, I_List_t *tokenList)
+static void ConsumeSingleCharacterSymbol(char current, I_Error_t * errorHandler, char *source, I_List_t *tokenList)
 {
-   newToken.type = symbolSyntaxRules[current].tokenType;
-   newToken.value = 0;
+   if(symbolSyntaxRules[current].canAppearNextToAnyToken
+      || ((isspace(PeekNext()) || PeekNext() == '\0') && isspace(PeekPrevious(source))))
+   {
+      newToken.type = symbolSyntaxRules[current].tokenType;
+      newToken.value = 0;
 
-   List_Add(tokenList, &newToken);
-   AdvanceOne();
+      List_Add(tokenList, &newToken);
+      AdvanceOne();
+   }
+   else
+   {
+      char error[44] = "Symbol ' ' cannot appear next to ' ' or ' '";
+      error[8] = current;
+      error[34] = PeekPrevious(source);
+      error[41] = PeekNext();
+      Error_Report(errorHandler, error);
+
+      AdvanceOne();
+   }
 }
 
-static void ConsumeMultiCharacterComparator(char current, I_List_t *tokenList)
+static void ConsumeMultiCharacterComparator(char current, I_Error_t * errorHandler, char *source, I_List_t *tokenList)
 {
-   switch(current)
+   if((isspace(PeekAhead(2)) || PeekAhead(2) == '\0') && (isspace(PeekPrevious(source)) || PeekPrevious(source) == '\0'))
    {
-      case '<':
-         newToken.type = Token_Type_LessEqual;
-         newToken.value = 0;
-         break;
-      case '>':
-         newToken.type = Token_Type_GreaterEqual;
-         newToken.value = 0;
-         break;
-      case '!':
-         newToken.type = Token_Type_BangEqual;
-         newToken.value = 0;
-         break;
-      case '=':
-         newToken.type = Token_Type_EqualEqual;
-         newToken.value = 0;
-         break;
+      switch(current)
+      {
+         case '<':
+            newToken.type = Token_Type_LessEqual;
+            newToken.value = 0;
+            break;
+         case '>':
+            newToken.type = Token_Type_GreaterEqual;
+            newToken.value = 0;
+            break;
+         case '!':
+            newToken.type = Token_Type_BangEqual;
+            newToken.value = 0;
+            break;
+         case '=':
+            newToken.type = Token_Type_EqualEqual;
+            newToken.value = 0;
+            break;
+      }
+      List_Add(tokenList, &newToken);
+      AdvanceOne();
+      AdvanceOne();
    }
+   else
+   {
+      char error[45] = "Symbol '  ' cannot appear next to ' ' or ' '";
+      error[8] = current;
+      error[9] = PeekNext();
+      error[35] = PeekPrevious(source);
+      error[42] = PeekAhead(2);
+      Error_Report(errorHandler, error);
 
-   List_Add(tokenList, &newToken);
-   AdvanceOne();
-   AdvanceOne();
+      AdvanceOne();
+      AdvanceOne();
+   }
 }
 
 static void ConsumeMultiDot(char current, I_List_t *tokenList)
@@ -299,7 +327,7 @@ static void lex(I_Lexer_t *interface, const char *source, I_List_t *tokenList)
       }
       else if(isMultiCharacterComparator(current))
       {
-         ConsumeMultiCharacterComparator(current, tokenList);
+         ConsumeMultiCharacterComparator(current, instance->errorHandler, source, tokenList);
       }
       else if(isMultiDot(current))
       {
@@ -307,7 +335,7 @@ static void lex(I_Lexer_t *interface, const char *source, I_List_t *tokenList)
       }
       else if(isSingleCharacterSymbol(current))
       {
-         ConsumeSingleCharacterSymbol(current, tokenList);
+         ConsumeSingleCharacterSymbol(current, instance->errorHandler, source, tokenList);
       }
       else
       {

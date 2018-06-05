@@ -122,9 +122,22 @@ TEST(Lexer_Concrete, RecognizesManySymbolsWithSpacesInbetween)
 
 TEST(Lexer_Concrete, NoSpaceBetweenTokensRequiringSpaceReportsErrors)
 {
-   const char *source = "@#$:-+/*=<><=>=!===";
+   const char *source = "@#$-+/*=<><=>=!===";
 
-   ShouldReportThisError("");
+   ShouldReportThisError("Symbol '@' cannot appear next to ' ' or '#'");
+   ShouldReportThisError("Symbol '#' cannot appear next to '@' or '$'");
+   ShouldReportThisError("Symbol '$' cannot appear next to '#' or '-'");
+   ShouldReportThisError("Symbol '-' cannot appear next to '$' or '+'");
+   ShouldReportThisError("Symbol '+' cannot appear next to '-' or '/'");
+   ShouldReportThisError("Symbol '/' cannot appear next to '+' or '*'");
+   ShouldReportThisError("Symbol '*' cannot appear next to '/' or '='");
+   ShouldReportThisError("Symbol '=' cannot appear next to '*' or '<'");
+   ShouldReportThisError("Symbol '<' cannot appear next to '=' or '>'");
+   ShouldReportThisError("Symbol '>' cannot appear next to '<' or '<'");
+   ShouldReportThisError("Symbol '<=' cannot appear next to '>' or '>'");
+   ShouldReportThisError("Symbol '>=' cannot appear next to '=' or '!'");
+   ShouldReportThisError("Symbol '!=' cannot appear next to '=' or '='");
+   ShouldReportThisError("Symbol '==' cannot appear next to '=' or ' '");
    Lexer_Lex(&lexer.interface, source, &tokens.interface);
 }
 
