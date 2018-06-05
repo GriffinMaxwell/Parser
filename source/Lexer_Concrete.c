@@ -13,8 +13,7 @@ static struct
 {
    bool isValid;
    Token_Type_t tokenType;
-   bool mustBeSurroundedByWhitespace;
-   uint8_t maxNumberOfRepetitions;
+   bool canAppearNextToAnyToken;
 } singleSymbolSyntaxRules[128] = { 0 };
 
 static const char *sourceStringCharacterPointer;
@@ -23,108 +22,87 @@ static void FillSingleSymbolSyntaxRuleArray()
 {
    singleSymbolSyntaxRules['('].isValid = true;
    singleSymbolSyntaxRules['('].tokenType = Token_Type_Paren_Left;
-   singleSymbolSyntaxRules['('].mustBeSurroundedByWhitespace = false;
-   singleSymbolSyntaxRules['('].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules['('].canAppearNextToAnyToken = true;
 
    singleSymbolSyntaxRules[')'].isValid = true;
    singleSymbolSyntaxRules[')'].tokenType = Token_Type_Paren_Right;
-   singleSymbolSyntaxRules[')'].mustBeSurroundedByWhitespace = false;
-   singleSymbolSyntaxRules[')'].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules[')'].canAppearNextToAnyToken = true;
 
    singleSymbolSyntaxRules['['].isValid = true;
    singleSymbolSyntaxRules['['].tokenType = Token_Type_SquareBrace_Left;
-   singleSymbolSyntaxRules['['].mustBeSurroundedByWhitespace = false;
-   singleSymbolSyntaxRules['['].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules['['].canAppearNextToAnyToken = true;
 
    singleSymbolSyntaxRules[']'].isValid = true;
    singleSymbolSyntaxRules[']'].tokenType = Token_Type_SquareBrace_Right;
-   singleSymbolSyntaxRules[']'].mustBeSurroundedByWhitespace = false;
-   singleSymbolSyntaxRules[']'].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules[']'].canAppearNextToAnyToken = true;
 
    singleSymbolSyntaxRules['{'].isValid = true;
    singleSymbolSyntaxRules['{'].tokenType = Token_Type_CurlyBrace_Left;
-   singleSymbolSyntaxRules['{'].mustBeSurroundedByWhitespace = false;
-   singleSymbolSyntaxRules['{'].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules['{'].canAppearNextToAnyToken = true;
 
    singleSymbolSyntaxRules['}'].isValid = true;
    singleSymbolSyntaxRules['}'].tokenType = Token_Type_CurlyBrace_Right;
-   singleSymbolSyntaxRules['}'].mustBeSurroundedByWhitespace = false;
-   singleSymbolSyntaxRules['}'].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules['}'].canAppearNextToAnyToken = true;
 
    singleSymbolSyntaxRules[','].isValid = true;
    singleSymbolSyntaxRules[','].tokenType = Token_Type_Comma;
-   singleSymbolSyntaxRules[','].mustBeSurroundedByWhitespace = false;
-   singleSymbolSyntaxRules[','].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules[','].canAppearNextToAnyToken = true;
 
    singleSymbolSyntaxRules['.'].isValid = true;
    singleSymbolSyntaxRules['.'].tokenType = Token_Type_Dot;
-   singleSymbolSyntaxRules['.'].mustBeSurroundedByWhitespace = false;
-   singleSymbolSyntaxRules['.'].maxNumberOfRepetitions = 3;
+   singleSymbolSyntaxRules['.'].canAppearNextToAnyToken = true;
 
    singleSymbolSyntaxRules['?'].isValid = true;
    singleSymbolSyntaxRules['?'].tokenType = Token_Type_Question;
-   singleSymbolSyntaxRules['?'].mustBeSurroundedByWhitespace = true;
-   singleSymbolSyntaxRules['?'].maxNumberOfRepetitions = 255;  // Should technically be unlimited
+   singleSymbolSyntaxRules['?'].canAppearNextToAnyToken = false;
 
    singleSymbolSyntaxRules['`'].isValid = true;
    singleSymbolSyntaxRules['`'].tokenType = Token_Type_Backtick;
-   singleSymbolSyntaxRules['`'].mustBeSurroundedByWhitespace = false;
-   singleSymbolSyntaxRules['`'].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules['`'].canAppearNextToAnyToken = true;
 
    singleSymbolSyntaxRules['@'].isValid = true;
    singleSymbolSyntaxRules['@'].tokenType = Token_Type_Arroba;
-   singleSymbolSyntaxRules['@'].mustBeSurroundedByWhitespace = true;
-   singleSymbolSyntaxRules['@'].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules['@'].canAppearNextToAnyToken = false;
 
    singleSymbolSyntaxRules['#'].isValid = true;
    singleSymbolSyntaxRules['#'].tokenType = Token_Type_Pound;
-   singleSymbolSyntaxRules['#'].mustBeSurroundedByWhitespace = true;
-   singleSymbolSyntaxRules['#'].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules['#'].canAppearNextToAnyToken = false;
 
    singleSymbolSyntaxRules['$'].isValid = true;
    singleSymbolSyntaxRules['$'].tokenType = Token_Type_Dollar;
-   singleSymbolSyntaxRules['$'].mustBeSurroundedByWhitespace = true;
-   singleSymbolSyntaxRules['$'].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules['$'].canAppearNextToAnyToken = false;
 
    singleSymbolSyntaxRules[':'].isValid = true;
    singleSymbolSyntaxRules[':'].tokenType = Token_Type_Colon;
-   singleSymbolSyntaxRules[':'].mustBeSurroundedByWhitespace = true;
-   singleSymbolSyntaxRules[':'].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules[':'].canAppearNextToAnyToken = false;
 
    singleSymbolSyntaxRules['-'].isValid = true;
    singleSymbolSyntaxRules['-'].tokenType = Token_Type_Dash;
-   singleSymbolSyntaxRules['-'].mustBeSurroundedByWhitespace = true;
-   singleSymbolSyntaxRules['-'].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules['-'].canAppearNextToAnyToken = false;
 
    singleSymbolSyntaxRules['+'].isValid = true;
    singleSymbolSyntaxRules['+'].tokenType = Token_Type_Plus;
-   singleSymbolSyntaxRules['+'].mustBeSurroundedByWhitespace = true;
-   singleSymbolSyntaxRules['+'].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules['+'].canAppearNextToAnyToken = false;
 
    singleSymbolSyntaxRules['/'].isValid = true;
    singleSymbolSyntaxRules['/'].tokenType = Token_Type_Slash;
-   singleSymbolSyntaxRules['/'].mustBeSurroundedByWhitespace = true;
-   singleSymbolSyntaxRules['/'].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules['/'].canAppearNextToAnyToken = false;
 
    singleSymbolSyntaxRules['*'].isValid = true;
    singleSymbolSyntaxRules['*'].tokenType = Token_Type_Asterisk;
-   singleSymbolSyntaxRules['*'].mustBeSurroundedByWhitespace = true;
-   singleSymbolSyntaxRules['*'].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules['*'].canAppearNextToAnyToken = false;
 
    singleSymbolSyntaxRules['='].isValid = true;
    singleSymbolSyntaxRules['='].tokenType = Token_Type_Equal;
-   singleSymbolSyntaxRules['='].mustBeSurroundedByWhitespace = true;
-   singleSymbolSyntaxRules['='].maxNumberOfRepetitions = 2;
+   singleSymbolSyntaxRules['='].canAppearNextToAnyToken = false;
 
    singleSymbolSyntaxRules['<'].isValid = true;
    singleSymbolSyntaxRules['<'].tokenType = Token_Type_AngleBracket_Left;
-   singleSymbolSyntaxRules['<'].mustBeSurroundedByWhitespace = true;
-   singleSymbolSyntaxRules['<'].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules['<'].canAppearNextToAnyToken = false;
 
    singleSymbolSyntaxRules['>'].isValid = true;
    singleSymbolSyntaxRules['>'].tokenType = Token_Type_AngleBracket_Right;
-   singleSymbolSyntaxRules['>'].mustBeSurroundedByWhitespace = true;
-   singleSymbolSyntaxRules['>'].maxNumberOfRepetitions = 1;
+   singleSymbolSyntaxRules['>'].canAppearNextToAnyToken = false;
 }
 
 static inline void AdvanceOne()
@@ -181,9 +159,9 @@ static bool isSingleCharacterSymbol(char current)
    return singleSymbolSyntaxRules[current].isValid;
 }
 
-static Token_t singleCharacterSymbol; // Declared outside to ensure initialized to zero 
 static void ConsumeSingleCharacterSymbol(char current, I_List_t *tokenList)
 {
+   static Token_t singleCharacterSymbol; // Declared static to ensure initialized to zero
    singleCharacterSymbol.type = singleSymbolSyntaxRules[current].tokenType;
    singleCharacterSymbol.value = 0;
 
@@ -193,24 +171,22 @@ static void ConsumeSingleCharacterSymbol(char current, I_List_t *tokenList)
 
 static void ReportUnknownSymbolError(char current, I_Error_t * errorHandler, I_List_t *tokenList)
 {
-   char message[26] = "Error: Invalid symbol ' '";
-   message[24] = current;
+   char message[19] = "Unknown symbol ' '";
+   message[16] = current;
    Error_Report(errorHandler, message);
 
    Token_t unknown = { .type = Token_Type_Unknown, .value = 0 };
    List_Add(tokenList, &unknown);
+
+   AdvanceOne();
 }
 
 static void lex(I_Lexer_t *interface, const char *source, I_List_t *tokenList)
 {
-   // Check identifier or literal (peek ahead and consume if necessary)
-   // Check multi-character symbols (peek ahead if necessary)
-   // Check single character symbols
-   // Else unknown
    REINTERPRET(instance, interface, Lexer_Concrete_t *);
    sourceStringCharacterPointer = source;
 
-   FillSingleSymbolSyntaxRuleArray(); // Make a big static table indexed by the characters themselves
+   FillSingleSymbolSyntaxRuleArray(); // Makes a big static table indexed by the characters themselves
 
    char current;
    while((current = Peek()) != '\0')

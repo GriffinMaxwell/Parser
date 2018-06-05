@@ -20,8 +20,9 @@ TEST_GROUP(Lexer_Concrete)
    {
       Error_Mock_Init(&errorMock);
       List_Calloc_Init(&tokens, sizeof(Token_t));
-
       Lexer_Concrete_Init(&lexer, &errorMock.interface);
+
+      mock().strictOrder();
    }
 
    void teardown()
@@ -89,10 +90,27 @@ TEST(Lexer_Concrete, RecognizesStringOfNonSpacedTokens)
    TheLexedListOfTokensShouldBe(expectedTokens, 9);
 }
 
-IGNORE_TEST(Lexer_Concrete, NoSpacesBetweenTokensRequiringWhitespaceReportsErrors)
+IGNORE_TEST(Lexer_Concrete, NoSpaceBetweenTokensRequiringSpaceReportsErrors)
 {
    const char *source = "?@#$:-+/*=<><=>=!===";
 
    ShouldReportThisError("Error");
    Lexer_Lex(&lexer.interface, source, &tokens.interface);
+}
+
+/***************************
+* Unkown symbols tests
+***************************/
+TEST(Lexer_Concrete, ReportsErrorForEachUnknownSymbol)
+{
+   const char *source = "%^&\|;";
+
+   ShouldReportThisError("Unknown symbol '%'");
+   ShouldReportThisError("Unknown symbol '^'");
+   ShouldReportThisError("Unknown symbol '&'");
+   ShouldReportThisError("Unknown symbol '\'");
+   ShouldReportThisError("Unknown symbol '|'");
+   ShouldReportThisError("Unknown symbol ';'");
+   Lexer_Lex(&lexer.interface, source, &tokens.interface);
+
 }

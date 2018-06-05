@@ -44,6 +44,9 @@ enum
    Token_Type_AngleBracket_Right,
 
    // Multi-character Symbols
+   Token_Type_DotDot,
+   Token_Type_DotDotDot,
+   Token_Type_EqualEqual,
    Token_Type_LessEqual,
    Token_Type_GreaterEqual,
    Token_Type_BangEqual,
