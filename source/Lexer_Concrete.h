@@ -8,12 +8,17 @@
 
 #include "I_Lexer.h"
 #include "I_Error.h"
+#include "Token.h"
 
 typedef struct
 {
    I_Lexer_t interface;
 
    I_Error_t *errorHandler;
+   I_List_t *tokenList;
+   Token_t token;
+   char *beginning;
+   char *current;
 } Lexer_Concrete_t;
 
 /*

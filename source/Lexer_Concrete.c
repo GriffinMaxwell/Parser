@@ -3,344 +3,320 @@
  */
 
 #include <stdbool.h>
-#include <ctype.h>
-#include <string.h>
+#include <stdint.h>
 #include "Lexer_Concrete.h"
-#include "Token.h"
 #include "util.h"
 
-static struct
+typedef struct
 {
-   Token_Type_t tokenType;
-   bool canAppearNextToAnyToken;
-   bool isSymbol;
-   bool isIdentifierCharacter;
-} symbolSyntaxRules[128] = { 0 };
+   void (*action)(Lexer_Concrete_t *instance);
+} Action_Table_t;
 
-static const char *sourceStringCharacterPointer;
-static Token_t newToken;
-
-static void FillSymbolSyntaxRuleArray()
+static inline char Peek(Lexer_Concrete_t *instance)
 {
-   symbolSyntaxRules['('].tokenType = Token_Type_Paren_Left;
-   symbolSyntaxRules['('].canAppearNextToAnyToken = true;
-   symbolSyntaxRules['('].isSymbol = true;
-   symbolSyntaxRules['('].isIdentifierCharacter = false;
-
-   symbolSyntaxRules[')'].tokenType = Token_Type_Paren_Right;
-   symbolSyntaxRules[')'].canAppearNextToAnyToken = true;
-   symbolSyntaxRules[')'].isSymbol = true;
-   symbolSyntaxRules[')'].isIdentifierCharacter = false;
-
-   symbolSyntaxRules['['].tokenType = Token_Type_SquareBrace_Left;
-   symbolSyntaxRules['['].canAppearNextToAnyToken = true;
-   symbolSyntaxRules['['].isSymbol = true;
-   symbolSyntaxRules['['].isIdentifierCharacter = false;
-
-   symbolSyntaxRules[']'].tokenType = Token_Type_SquareBrace_Right;
-   symbolSyntaxRules[']'].canAppearNextToAnyToken = true;
-   symbolSyntaxRules[']'].isSymbol = true;
-   symbolSyntaxRules[']'].isIdentifierCharacter = false;
-
-   symbolSyntaxRules['{'].tokenType = Token_Type_CurlyBrace_Left;
-   symbolSyntaxRules['{'].canAppearNextToAnyToken = true;
-   symbolSyntaxRules['{'].isSymbol = true;
-   symbolSyntaxRules['{'].isIdentifierCharacter = false;
-
-   symbolSyntaxRules['}'].tokenType = Token_Type_CurlyBrace_Right;
-   symbolSyntaxRules['}'].canAppearNextToAnyToken = true;
-   symbolSyntaxRules['}'].isSymbol = true;
-   symbolSyntaxRules['}'].isIdentifierCharacter = false;
-
-   symbolSyntaxRules[','].tokenType = Token_Type_Comma;
-   symbolSyntaxRules[','].canAppearNextToAnyToken = true;
-   symbolSyntaxRules[','].isSymbol = true;
-   symbolSyntaxRules[','].isIdentifierCharacter = false;
-
-   symbolSyntaxRules['.'].tokenType = Token_Type_Dot;
-   symbolSyntaxRules['.'].canAppearNextToAnyToken = true;
-   symbolSyntaxRules['.'].isSymbol = true;
-   symbolSyntaxRules['.'].isIdentifierCharacter = false;
-
-   symbolSyntaxRules['`'].tokenType = Token_Type_Backtick;
-   symbolSyntaxRules['`'].canAppearNextToAnyToken = true;
-   symbolSyntaxRules['`'].isSymbol = true;
-   symbolSyntaxRules['`'].isIdentifierCharacter = false;
-
-   symbolSyntaxRules['@'].tokenType = Token_Type_Arroba;
-   symbolSyntaxRules['@'].canAppearNextToAnyToken = false;
-   symbolSyntaxRules['@'].isSymbol = true;
-   symbolSyntaxRules['@'].isIdentifierCharacter = false;
-
-   symbolSyntaxRules['#'].tokenType = Token_Type_Pound;
-   symbolSyntaxRules['#'].canAppearNextToAnyToken = false;
-   symbolSyntaxRules['#'].isSymbol = true;
-   symbolSyntaxRules['#'].isIdentifierCharacter = true;
-
-   symbolSyntaxRules['$'].tokenType = Token_Type_Dollar;
-   symbolSyntaxRules['$'].canAppearNextToAnyToken = false;
-   symbolSyntaxRules['$'].isSymbol = true;
-   symbolSyntaxRules['$'].isIdentifierCharacter = false;
-
-   symbolSyntaxRules[':'].tokenType = Token_Type_Colon;
-   symbolSyntaxRules[':'].canAppearNextToAnyToken = true;
-   symbolSyntaxRules[':'].isSymbol = true;
-   symbolSyntaxRules[':'].isIdentifierCharacter = false;
-
-   symbolSyntaxRules['-'].tokenType = Token_Type_Dash;
-   symbolSyntaxRules['-'].canAppearNextToAnyToken = false;
-   symbolSyntaxRules['-'].isSymbol = true;
-   symbolSyntaxRules['-'].isIdentifierCharacter = true;
-
-   symbolSyntaxRules['+'].tokenType = Token_Type_Plus;
-   symbolSyntaxRules['+'].canAppearNextToAnyToken = false;
-   symbolSyntaxRules['+'].isSymbol = true;
-   symbolSyntaxRules['+'].isIdentifierCharacter = false;
-
-   symbolSyntaxRules['/'].tokenType = Token_Type_Slash;
-   symbolSyntaxRules['/'].canAppearNextToAnyToken = false;
-   symbolSyntaxRules['/'].isSymbol = true;
-   symbolSyntaxRules['/'].isIdentifierCharacter = false;
-
-   symbolSyntaxRules['*'].tokenType = Token_Type_Asterisk;
-   symbolSyntaxRules['*'].canAppearNextToAnyToken = false;
-   symbolSyntaxRules['*'].isSymbol = true;
-   symbolSyntaxRules['*'].isIdentifierCharacter = false;
-
-   symbolSyntaxRules['='].tokenType = Token_Type_Equal;
-   symbolSyntaxRules['='].canAppearNextToAnyToken = false;
-   symbolSyntaxRules['='].isSymbol = true;
-   symbolSyntaxRules['='].isIdentifierCharacter = false;
-
-   symbolSyntaxRules['<'].tokenType = Token_Type_AngleBracket_Left;
-   symbolSyntaxRules['<'].canAppearNextToAnyToken = false;
-   symbolSyntaxRules['<'].isSymbol = true;
-   symbolSyntaxRules['<'].isIdentifierCharacter = false;
-
-   symbolSyntaxRules['>'].tokenType = Token_Type_AngleBracket_Right;
-   symbolSyntaxRules['>'].canAppearNextToAnyToken = false;
-   symbolSyntaxRules['>'].isSymbol = true;
-   symbolSyntaxRules['>'].isIdentifierCharacter = false;
+   return *instance->current;
+}
+static inline char PeekNext(Lexer_Concrete_t *instance)
+{
+   (instance->current[1] == '\0') ? ' ' : instance->current[1];
 }
 
-static inline void AdvanceOne()
+static inline char PeekPrevious(Lexer_Concrete_t *instance)
 {
-   sourceStringCharacterPointer++;
+   (instance->current == instance->beginning) ? ' ' : *(instance->current - 1);
 }
 
-static inline char PeekPrevious(const char *source)
+static inline char PeekAhead(Lexer_Concrete_t *instance, size_t ahead);
+
+static inline void AdvanceOne(Lexer_Concrete_t *instance)
 {
-   if(sourceStringCharacterPointer == source)
+   instance->current++;
+}
+
+static bool canTouch(char c)
+{
+   return isspace(c)
+      || c == '('
+      || c == ')'
+      || c == '['
+      || c == ']'
+      || c == '{'
+      || c == '}'
+      || c == ','
+      || c == '`'
+      || c == '.'
+      || c == ':';
+}
+
+static void Ignore(Lexer_Concrete_t *instance)
+{
+   AdvanceOne(instance);
+}
+
+static void ReportUnknownSymbol(Lexer_Concrete_t *instance)
+{
+
+}
+
+static void ReportImproperUseOfApos(Lexer_Concrete_t *instance)
+{
+
+}
+
+static void ConsumeIdentifier(Lexer_Concrete_t *instance)
+{
+   instance->token.type = Token_Type_Identifier_Unknown;
+   instance->token.lexeme = instance->current;
+
+   bool foundLetter = false;
+   while(isalpha(Peek(instance))
+      || Peek(instance) == '_'
+      || Peek(instance) == '-'
+      || Peek(instance) == '#'
+      || Peek(instance) == '!'
+      || Peek(instance) == '?')
    {
-      return ' ';   // Return space if at the beginning of the string
-   }
-   else
-   {
-      return *(sourceStringCharacterPointer - 1);
-   }
-}
-
-static inline char Peek()
-{
-   return *sourceStringCharacterPointer;
-}
-
-static inline char PeekNext()
-{
-   return sourceStringCharacterPointer[1];
-}
-
-static inline char PeekAhead(size_t ahead)
-{
-   return (sourceStringCharacterPointer[ahead] == '\0') ? ' ' : sourceStringCharacterPointer[ahead];
-}
-
-static bool isIdentifier(char current)
-{
-   if(isalpha(current) || (current == '?'))
-   {
-      return true;
-   }
-   else if(symbolSyntaxRules[current].isIdentifierCharacter)
-   {
-      // Keep peeking ahead until you find an alpha character.
-      // If you hit a space, null terminator, or non-identifier, can't be an identifier
-      size_t i = 0;
-      char next = current;
-      while(next != '\0' || !isspace(next))
+      if(isalpha(Peek(instance)) || Peek(instance) == '?')
       {
-         if(isalpha(next))
-         {
-            return true;
-         }
-         else if(symbolSyntaxRules[next].isIdentifierCharacter)
-         {
-            i++;
-            next = PeekAhead(i);
-         }
-         else
-         {
-            return false;
-         }
+         foundLetter = true;
       }
+      AdvanceOne(instance);
    }
 
-   // Kludgy rules for non-alpha characters that can appear in an identifier,
-   // including the question mark, which can appear more than once in a row
-
-}
-
-static bool isMultiCharacterComparator(char current)
-{
-   return ((current == '<'
-         || current == '>'
-         || current == '!'
-         || current == '=')
-      && PeekNext() == '=');
-}
-
-static bool isMultiDot(char current)
-{
-   return (current == '.') && (PeekNext() == '.');
-}
-
-static bool isSingleCharacterSymbol(char current)
-{
-   return symbolSyntaxRules[current].isSymbol;  // Multi character symbols already been eliminated
-}
-
-static void ConsumeSingleCharacterSymbol(char current, I_Error_t * errorHandler, char *source, I_List_t *tokenList)
-{
-   if(symbolSyntaxRules[current].canAppearNextToAnyToken
-      || ((isspace(PeekNext()) || PeekNext() == '\0') && isspace(PeekPrevious(source))))
+   if(foundLetter)
    {
-      newToken.type = symbolSyntaxRules[current].tokenType;
-      newToken.value = 0;
-
-      List_Add(tokenList, &newToken);
-      AdvanceOne();
+      List_Add(instance->tokenList, &instance->token);
    }
    else
    {
-      char error[44] = "Symbol ' ' cannot appear next to ' ' or ' '";
-      error[8] = current;
-      error[34] = PeekPrevious(source);
-      error[41] = PeekNext();
-      Error_Report(errorHandler, error);
-
-      AdvanceOne();
+      Error_Report(instance->errorHandler, "Bad identifier name.");
    }
 }
 
-static void ConsumeMultiCharacterComparator(char current, I_Error_t * errorHandler, char *source, I_List_t *tokenList)
+static void ConsumeUnigraphSymbol(Lexer_Concrete_t *instance)
 {
-   if((isspace(PeekAhead(2)) || PeekAhead(2) == '\0') && (isspace(PeekPrevious(source)) || PeekPrevious(source) == '\0'))
-   {
-      switch(current)
-      {
-         case '<':
-            newToken.type = Token_Type_LessEqual;
-            newToken.value = 0;
-            break;
-         case '>':
-            newToken.type = Token_Type_GreaterEqual;
-            newToken.value = 0;
-            break;
-         case '!':
-            newToken.type = Token_Type_BangEqual;
-            newToken.value = 0;
-            break;
-         case '=':
-            newToken.type = Token_Type_EqualEqual;
-            newToken.value = 0;
-            break;
-      }
-      List_Add(tokenList, &newToken);
-      AdvanceOne();
-      AdvanceOne();
-   }
-   else
-   {
-      char error[45] = "Symbol '  ' cannot appear next to ' ' or ' '";
-      error[8] = current;
-      error[9] = PeekNext();
-      error[35] = PeekPrevious(source);
-      error[42] = PeekAhead(2);
-      Error_Report(errorHandler, error);
-
-      AdvanceOne();
-      AdvanceOne();
-   }
+   //switch()
 }
 
-static void ConsumeMultiDot(char current, I_List_t *tokenList)
+static void CheckSpacingAndConsumeUnigraphSymbol(Lexer_Concrete_t *instance)
 {
-   if (PeekAhead(2) == '.')
+   switch(Peek(instance))
    {
-      newToken.type = Token_Type_DotDotDot;
-      AdvanceOne();
-      AdvanceOne();
-      AdvanceOne();
+      case '@':
+      case '$':
+      case '+':
+      case '/':
+      case '*':
+      case '=':
+      case '<':
+      case '>':
+         if(!canTouch(PeekPrevious(instance)) || !canTouch(PeekNext(instance)))
+         {
+            char message[45] = "Symbol ' ' cannot appear next to ' ' or ' '";
+            message[8] = Peek(instance);
+            message[34] = PeekPrevious(instance);
+            message[42] = PeekNext(instance);
+            Error_Report(instance->errorHandler, message);
+         }
    }
-   else
-   {
-      newToken.type = Token_Type_DotDot;
-      AdvanceOne();
-      AdvanceOne();
-   }
-
-   newToken.value = 0;
-   List_Add(tokenList, &newToken);
 }
 
-static void ReportUnknownSymbolError(char current, I_Error_t * errorHandler, I_List_t *tokenList)
+static void ConsumeNumberLiteral(Lexer_Concrete_t *instance)
 {
-   char message[19] = "Unknown symbol ' '";
-   message[16] = current;
-   Error_Report(errorHandler, message);
 
-   Token_t unknown = { .type = Token_Type_Unknown, .value = 0 };
-   List_Add(tokenList, &unknown);
-
-   AdvanceOne();
 }
+
+static void ConsumeStringLiteral(Lexer_Concrete_t *instance)
+{
+
+}
+
+static void CheckEqualsDigraph(Lexer_Concrete_t *instance)
+{
+
+}
+
+static void CheckEqualsDigraphOrIdentifier(Lexer_Concrete_t *instance)
+{
+
+}
+
+static void CheckNumberOrIdentifier(Lexer_Concrete_t *instance)
+{
+
+}
+
+static void HandleSpecialCase_Pound(Lexer_Concrete_t *instance)
+{
+
+}
+
+static void HandleSpecialCase_Dot(Lexer_Concrete_t *instance)
+{
+
+}
+
+static void HandleSpecialCase_Colon(Lexer_Concrete_t *instance)
+{
+
+}
+
+static void HandleSpecialCase_Dash(Lexer_Concrete_t *instance)
+{
+
+}
+
+const Action_Table_t actionTable[128] =
+{
+   { ReportUnknownSymbol }, // null
+   { ReportUnknownSymbol }, // start of heading
+   { ReportUnknownSymbol }, // start of text
+   { ReportUnknownSymbol }, // end of text
+   { ReportUnknownSymbol }, // end of transmission
+   { ReportUnknownSymbol }, // enquiry
+   { ReportUnknownSymbol }, // ACK
+   { ReportUnknownSymbol }, // bell
+   { ReportUnknownSymbol }, // backspace
+   { Ignore },              // horizontal tab
+   { Ignore },              // LF
+   { Ignore },              // vertical tab
+   { Ignore },              // FF
+   { Ignore },              // CR
+   { ReportUnknownSymbol }, // shift out
+   { ReportUnknownSymbol }, // shift in
+   { ReportUnknownSymbol }, // data link escape
+   { ReportUnknownSymbol }, // device control 1
+   { ReportUnknownSymbol }, // device control 2
+   { ReportUnknownSymbol }, // device control 3
+   { ReportUnknownSymbol }, // device control 4
+   { ReportUnknownSymbol }, // NAK
+   { ReportUnknownSymbol }, // SYN
+   { ReportUnknownSymbol }, // end of transmission block
+   { ReportUnknownSymbol }, // cancel
+   { ReportUnknownSymbol }, // end of medium
+   { ReportUnknownSymbol }, // substitute
+   { ReportUnknownSymbol }, // escape
+   { ReportUnknownSymbol }, // file separator
+   { ReportUnknownSymbol }, // group separator
+   { ReportUnknownSymbol }, // record separator
+   { ReportUnknownSymbol }, // unit separator
+
+   { Ignore }, // Space
+   { CheckEqualsDigraphOrIdentifier }, // !
+   { ConsumeStringLiteral }, // "
+   { HandleSpecialCase_Pound }, // #
+   { ConsumeUnigraphSymbol }, // $
+   { ReportUnknownSymbol }, // %
+   { ReportUnknownSymbol }, // &
+   { ReportImproperUseOfApos }, // '
+   { ConsumeUnigraphSymbol }, // (
+   { ConsumeUnigraphSymbol }, // )
+   { CheckSpacingAndConsumeUnigraphSymbol }, // *
+   { CheckSpacingAndConsumeUnigraphSymbol }, // +
+   { ConsumeUnigraphSymbol }, // ,
+   { HandleSpecialCase_Dash }, // -
+   { ConsumeUnigraphSymbol }, // .
+   { CheckSpacingAndConsumeUnigraphSymbol }, // /
+
+   { CheckNumberOrIdentifier }, // 0
+   { CheckNumberOrIdentifier }, // 1
+   { CheckNumberOrIdentifier }, // 2
+   { CheckNumberOrIdentifier }, // 3
+   { CheckNumberOrIdentifier }, // 4
+   { CheckNumberOrIdentifier }, // 5
+   { CheckNumberOrIdentifier }, // 6
+   { CheckNumberOrIdentifier }, // 7
+   { CheckNumberOrIdentifier }, // 8
+   { CheckNumberOrIdentifier }, // 9
+
+   { HandleSpecialCase_Colon }, // :
+   { ReportUnknownSymbol }, // ;
+   { CheckEqualsDigraph }, // <
+   { CheckEqualsDigraph }, // =
+   { CheckEqualsDigraph }, // >
+   { ConsumeIdentifier }, // ?
+   { CheckSpacingAndConsumeUnigraphSymbol }, // @
+
+   { ConsumeIdentifier },                    // A
+   { ConsumeIdentifier },                    // B
+   { ConsumeIdentifier },                    // C
+   { ConsumeIdentifier },                    // D
+   { ConsumeIdentifier },                    // E
+   { ConsumeIdentifier },                    // F
+   { ConsumeIdentifier },                    // G
+   { ConsumeIdentifier },                    // H
+   { ConsumeIdentifier },                    // I
+   { ConsumeIdentifier },                    // J
+   { ConsumeIdentifier },                    // K
+   { ConsumeIdentifier },                    // L
+   { ConsumeIdentifier },                    // M
+   { ConsumeIdentifier },                    // N
+   { ConsumeIdentifier },                    // O
+   { ConsumeIdentifier },                    // P
+   { ConsumeIdentifier },                    // Q
+   { ConsumeIdentifier },                    // R
+   { ConsumeIdentifier },                    // S
+   { ConsumeIdentifier },                    // T
+   { ConsumeIdentifier },                    // U
+   { ConsumeIdentifier },                    // V
+   { ConsumeIdentifier },                    // W
+   { ConsumeIdentifier },                    // X
+   { ConsumeIdentifier },                    // Y
+   { ConsumeIdentifier },                    // Z
+
+   { ConsumeUnigraphSymbol },                // [
+   { ReportUnknownSymbol },                  // Backslash
+   { ConsumeUnigraphSymbol },                // ]
+   { ConsumeUnigraphSymbol },                // ^
+   { ConsumeIdentifier },                    // _
+   { ConsumeUnigraphSymbol },                // `
+
+   { ConsumeIdentifier },                    // a
+   { ConsumeIdentifier },                    // b
+   { ConsumeIdentifier },                    // c
+   { ConsumeIdentifier },                    // d
+   { ConsumeIdentifier },                    // e
+   { ConsumeIdentifier },                    // f
+   { ConsumeIdentifier },                    // g
+   { ConsumeIdentifier },                    // h
+   { ConsumeIdentifier },                    // i
+   { ConsumeIdentifier },                    // j
+   { ConsumeIdentifier },                    // k
+   { ConsumeIdentifier },                    // l
+   { ConsumeIdentifier },                    // m
+   { ConsumeIdentifier },                    // n
+   { ConsumeIdentifier },                    // o
+   { ConsumeIdentifier },                    // p
+   { ConsumeIdentifier },                    // q
+   { ConsumeIdentifier },                    // r
+   { ConsumeIdentifier },                    // s
+   { ConsumeIdentifier },                    // t
+   { ConsumeIdentifier },                    // u
+   { ConsumeIdentifier },                    // v
+   { ConsumeIdentifier },                    // w
+   { ConsumeIdentifier },                    // x
+   { ConsumeIdentifier },                    // y
+   { ConsumeIdentifier },                    // z
+
+   { ConsumeUnigraphSymbol },                // {
+   { ReportUnknownSymbol },                  // |
+   { ConsumeUnigraphSymbol },                // }
+   { ConsumeIdentifier },                    // ~
+   { ReportUnknownSymbol }                   // DEL
+};
+
+// static void ReportInvalidSpacing(Lexer_Concrete_t *instance, CharacterClass_t class)
 
 static void lex(I_Lexer_t *interface, const char *source, I_List_t *tokenList)
 {
    REINTERPRET(instance, interface, Lexer_Concrete_t *);
-   sourceStringCharacterPointer = source;
+   instance->beginning = source;
+   instance->tokenList = tokenList;
+   // memset(&instance->token, 0, sizeof(Token_t));
 
-   FillSymbolSyntaxRuleArray(); // Makes a big static table indexed by the characters themselves
-
-   char current;
-   while((current = Peek()) != '\0')
+   while((instance->current = Peek(instance)) != '\0')
    {
-      if(isspace(current))
-      {
-         AdvanceOne();  // Ignore whitespace
-      }
-      else if(isIdentifier(current))
-      {
-
-         Error_Report(instance->errorHandler, "Identifier");
-         // ConsumeIdentifier();
-      }
-      else if(isMultiCharacterComparator(current))
-      {
-         ConsumeMultiCharacterComparator(current, instance->errorHandler, source, tokenList);
-      }
-      else if(isMultiDot(current))
-      {
-         ConsumeMultiDot(current, tokenList);
-      }
-      else if(isSingleCharacterSymbol(current))
-      {
-         ConsumeSingleCharacterSymbol(current, instance->errorHandler, source, tokenList);
-      }
-      else
-      {
-         ReportUnknownSymbolError(current, instance->errorHandler, tokenList);
-      }
+      actionTable[(*instance->current)].action(instance);
    }
 }
 

@@ -62,7 +62,7 @@ TEST_GROUP(Lexer_Concrete)
  * Single token tests
  ***************************/
 
-IGNORE_TEST(Lexer_Concrete, RecognizesRightCurlyBrace)
+TEST(Lexer_Concrete, RecognizesRightCurlyBrace)
 {
    const Token_t expectedToken = { Token_Type_CurlyBrace_Right, 0 };
 
@@ -142,9 +142,9 @@ TEST(Lexer_Concrete, NoSpaceBetweenTokensRequiringSpaceReportsErrors)
 }
 
 /***************************
-* Unkown symbols tests
+* Unknown
 ***************************/
-TEST(Lexer_Concrete, ReportsErrorForEachUnknownSymbol)
+IGNORE_TEST(Lexer_Concrete, ReportsErrorForUnknownPrintableSymbols)
 {
    const char *source = "%^&\\|;";
 
@@ -155,5 +155,15 @@ TEST(Lexer_Concrete, ReportsErrorForEachUnknownSymbol)
    ShouldReportThisError("Unknown symbol '|'");
    ShouldReportThisError("Unknown symbol ';'");
    Lexer_Lex(&lexer.interface, source, &tokens.interface);
+
+}
+
+IGNORE_TEST(Lexer_Concrete, ReportsErrorForUnknownNonPrintableSymbols)
+{
+
+}
+
+IGNORE_TEST(Lexer_Concrete, ReportsErrorForNonAscii)
+{
 
 }
