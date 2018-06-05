@@ -28,6 +28,9 @@ TEST_GROUP(Lexer_Concrete)
    void teardown()
    {
       List_Calloc_Deinit(&tokens);
+
+
+      mock().checkExpectations();
       mock().clear();
    }
 
@@ -90,11 +93,44 @@ TEST(Lexer_Concrete, RecognizesStringOfNonSpacedTokens)
    TheLexedListOfTokensShouldBe(expectedTokens, 9);
 }
 
-IGNORE_TEST(Lexer_Concrete, NoSpaceBetweenTokensRequiringSpaceReportsErrors)
+TEST(Lexer_Concrete, RecognizesManySymbolsWithSpacesInbetween)
+{
+   const char *source = "? @ # $ - + / * = < > <= >= != == . .. ...";
+   const Token_t expectedTokens[] = {
+      { Token_Type_Question, 1 },
+      { Token_Type_Arroba, 0 },
+      { Token_Type_Pound, 0 },
+      { Token_Type_Dollar, 0 },
+      { Token_Type_Dash, 0 },
+      { Token_Type_Plus, 0 },
+      { Token_Type_Slash, 0 },
+      { Token_Type_Asterisk, 0 },
+      { Token_Type_Equal, 0 },
+      { Token_Type_AngleBracket_Left, 0 },
+      { Token_Type_AngleBracket_Right, 0 },
+      { Token_Type_LessEqual, 0 },
+      { Token_Type_GreaterEqual, 0 },
+      { Token_Type_BangEqual, 0 },
+      { Token_Type_EqualEqual, 0 },
+      { Token_Type_Dot, 0 },
+      { Token_Type_DotDot, 0 },
+      { Token_Type_DotDotDot, 0 },
+   };
+
+   Lexer_Lex(&lexer.interface, source, &tokens.interface);
+   TheLexedListOfTokensShouldBe(expectedTokens, 18);
+}
+
+TEST(Lexer_Concrete, RecognizesAnyNumberOfQuestionMarksInARowWithASingleQuestionMarkToken)
+{
+
+}
+
+TEST(Lexer_Concrete, NoSpaceBetweenTokensRequiringSpaceReportsErrors)
 {
    const char *source = "?@#$:-+/*=<><=>=!===";
 
-   ShouldReportThisError("Error");
+   ShouldReportThisError("");
    Lexer_Lex(&lexer.interface, source, &tokens.interface);
 }
 
@@ -103,12 +139,12 @@ IGNORE_TEST(Lexer_Concrete, NoSpaceBetweenTokensRequiringSpaceReportsErrors)
 ***************************/
 TEST(Lexer_Concrete, ReportsErrorForEachUnknownSymbol)
 {
-   const char *source = "%^&\|;";
+   const char *source = "%^&\\|;";
 
    ShouldReportThisError("Unknown symbol '%'");
    ShouldReportThisError("Unknown symbol '^'");
    ShouldReportThisError("Unknown symbol '&'");
-   ShouldReportThisError("Unknown symbol '\'");
+   ShouldReportThisError("Unknown symbol '\\'");
    ShouldReportThisError("Unknown symbol '|'");
    ShouldReportThisError("Unknown symbol ';'");
    Lexer_Lex(&lexer.interface, source, &tokens.interface);

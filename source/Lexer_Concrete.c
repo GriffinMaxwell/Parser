@@ -11,98 +11,121 @@
 
 static struct
 {
-   bool isValid;
    Token_Type_t tokenType;
    bool canAppearNextToAnyToken;
-} singleSymbolSyntaxRules[128] = { 0 };
+   bool isSymbol;
+   bool isIdentifierCharacter;
+} symbolSyntaxRules[128] = { 0 };
 
 static const char *sourceStringCharacterPointer;
+static Token_t newToken;
 
-static void FillSingleSymbolSyntaxRuleArray()
+static void FillSymbolSyntaxRuleArray()
 {
-   singleSymbolSyntaxRules['('].isValid = true;
-   singleSymbolSyntaxRules['('].tokenType = Token_Type_Paren_Left;
-   singleSymbolSyntaxRules['('].canAppearNextToAnyToken = true;
+   symbolSyntaxRules['('].tokenType = Token_Type_Paren_Left;
+   symbolSyntaxRules['('].canAppearNextToAnyToken = true;
+   symbolSyntaxRules['('].isSymbol = true;
+   symbolSyntaxRules['('].isIdentifierCharacter = false;
 
-   singleSymbolSyntaxRules[')'].isValid = true;
-   singleSymbolSyntaxRules[')'].tokenType = Token_Type_Paren_Right;
-   singleSymbolSyntaxRules[')'].canAppearNextToAnyToken = true;
+   symbolSyntaxRules[')'].tokenType = Token_Type_Paren_Right;
+   symbolSyntaxRules[')'].canAppearNextToAnyToken = true;
+   symbolSyntaxRules[')'].isSymbol = true;
+   symbolSyntaxRules[')'].isIdentifierCharacter = false;
 
-   singleSymbolSyntaxRules['['].isValid = true;
-   singleSymbolSyntaxRules['['].tokenType = Token_Type_SquareBrace_Left;
-   singleSymbolSyntaxRules['['].canAppearNextToAnyToken = true;
+   symbolSyntaxRules['['].tokenType = Token_Type_SquareBrace_Left;
+   symbolSyntaxRules['['].canAppearNextToAnyToken = true;
+   symbolSyntaxRules['['].isSymbol = true;
+   symbolSyntaxRules['['].isIdentifierCharacter = false;
 
-   singleSymbolSyntaxRules[']'].isValid = true;
-   singleSymbolSyntaxRules[']'].tokenType = Token_Type_SquareBrace_Right;
-   singleSymbolSyntaxRules[']'].canAppearNextToAnyToken = true;
+   symbolSyntaxRules[']'].tokenType = Token_Type_SquareBrace_Right;
+   symbolSyntaxRules[']'].canAppearNextToAnyToken = true;
+   symbolSyntaxRules[']'].isSymbol = true;
+   symbolSyntaxRules[']'].isIdentifierCharacter = false;
 
-   singleSymbolSyntaxRules['{'].isValid = true;
-   singleSymbolSyntaxRules['{'].tokenType = Token_Type_CurlyBrace_Left;
-   singleSymbolSyntaxRules['{'].canAppearNextToAnyToken = true;
+   symbolSyntaxRules['{'].tokenType = Token_Type_CurlyBrace_Left;
+   symbolSyntaxRules['{'].canAppearNextToAnyToken = true;
+   symbolSyntaxRules['{'].isSymbol = true;
+   symbolSyntaxRules['{'].isIdentifierCharacter = false;
 
-   singleSymbolSyntaxRules['}'].isValid = true;
-   singleSymbolSyntaxRules['}'].tokenType = Token_Type_CurlyBrace_Right;
-   singleSymbolSyntaxRules['}'].canAppearNextToAnyToken = true;
+   symbolSyntaxRules['}'].tokenType = Token_Type_CurlyBrace_Right;
+   symbolSyntaxRules['}'].canAppearNextToAnyToken = true;
+   symbolSyntaxRules['}'].isSymbol = true;
+   symbolSyntaxRules['}'].isIdentifierCharacter = false;
 
-   singleSymbolSyntaxRules[','].isValid = true;
-   singleSymbolSyntaxRules[','].tokenType = Token_Type_Comma;
-   singleSymbolSyntaxRules[','].canAppearNextToAnyToken = true;
+   symbolSyntaxRules[','].tokenType = Token_Type_Comma;
+   symbolSyntaxRules[','].canAppearNextToAnyToken = true;
+   symbolSyntaxRules[','].isSymbol = true;
+   symbolSyntaxRules[','].isIdentifierCharacter = false;
 
-   singleSymbolSyntaxRules['.'].isValid = true;
-   singleSymbolSyntaxRules['.'].tokenType = Token_Type_Dot;
-   singleSymbolSyntaxRules['.'].canAppearNextToAnyToken = true;
+   symbolSyntaxRules['.'].tokenType = Token_Type_Dot;
+   symbolSyntaxRules['.'].canAppearNextToAnyToken = true;
+   symbolSyntaxRules['.'].isSymbol = true;
+   symbolSyntaxRules['.'].isIdentifierCharacter = false;
 
-   singleSymbolSyntaxRules['?'].isValid = true;
-   singleSymbolSyntaxRules['?'].tokenType = Token_Type_Question;
-   singleSymbolSyntaxRules['?'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['?'].tokenType = Token_Type_Question;
+   symbolSyntaxRules['?'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['?'].isSymbol = true;
+   symbolSyntaxRules['?'].isIdentifierCharacter = false; // TODO: let me be true
 
-   singleSymbolSyntaxRules['`'].isValid = true;
-   singleSymbolSyntaxRules['`'].tokenType = Token_Type_Backtick;
-   singleSymbolSyntaxRules['`'].canAppearNextToAnyToken = true;
+   symbolSyntaxRules['`'].tokenType = Token_Type_Backtick;
+   symbolSyntaxRules['`'].canAppearNextToAnyToken = true;
+   symbolSyntaxRules['`'].isSymbol = true;
+   symbolSyntaxRules['`'].isIdentifierCharacter = false;
 
-   singleSymbolSyntaxRules['@'].isValid = true;
-   singleSymbolSyntaxRules['@'].tokenType = Token_Type_Arroba;
-   singleSymbolSyntaxRules['@'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['@'].tokenType = Token_Type_Arroba;
+   symbolSyntaxRules['@'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['@'].isSymbol = true;
+   symbolSyntaxRules['@'].isIdentifierCharacter = false;
 
-   singleSymbolSyntaxRules['#'].isValid = true;
-   singleSymbolSyntaxRules['#'].tokenType = Token_Type_Pound;
-   singleSymbolSyntaxRules['#'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['#'].tokenType = Token_Type_Pound;
+   symbolSyntaxRules['#'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['#'].isSymbol = true;
+   symbolSyntaxRules['#'].isIdentifierCharacter = true;
 
-   singleSymbolSyntaxRules['$'].isValid = true;
-   singleSymbolSyntaxRules['$'].tokenType = Token_Type_Dollar;
-   singleSymbolSyntaxRules['$'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['$'].tokenType = Token_Type_Dollar;
+   symbolSyntaxRules['$'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['$'].isSymbol = true;
+   symbolSyntaxRules['$'].isIdentifierCharacter = false;
 
-   singleSymbolSyntaxRules[':'].isValid = true;
-   singleSymbolSyntaxRules[':'].tokenType = Token_Type_Colon;
-   singleSymbolSyntaxRules[':'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules[':'].tokenType = Token_Type_Colon;
+   symbolSyntaxRules[':'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules[':'].isSymbol = true;
+   symbolSyntaxRules[':'].isIdentifierCharacter = false;
 
-   singleSymbolSyntaxRules['-'].isValid = true;
-   singleSymbolSyntaxRules['-'].tokenType = Token_Type_Dash;
-   singleSymbolSyntaxRules['-'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['-'].tokenType = Token_Type_Dash;
+   symbolSyntaxRules['-'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['-'].isSymbol = true;
+   symbolSyntaxRules['-'].isIdentifierCharacter = true;
 
-   singleSymbolSyntaxRules['+'].isValid = true;
-   singleSymbolSyntaxRules['+'].tokenType = Token_Type_Plus;
-   singleSymbolSyntaxRules['+'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['+'].tokenType = Token_Type_Plus;
+   symbolSyntaxRules['+'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['+'].isSymbol = true;
+   symbolSyntaxRules['+'].isIdentifierCharacter = false;
 
-   singleSymbolSyntaxRules['/'].isValid = true;
-   singleSymbolSyntaxRules['/'].tokenType = Token_Type_Slash;
-   singleSymbolSyntaxRules['/'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['/'].tokenType = Token_Type_Slash;
+   symbolSyntaxRules['/'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['/'].isSymbol = true;
+   symbolSyntaxRules['/'].isIdentifierCharacter = false;
 
-   singleSymbolSyntaxRules['*'].isValid = true;
-   singleSymbolSyntaxRules['*'].tokenType = Token_Type_Asterisk;
-   singleSymbolSyntaxRules['*'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['*'].tokenType = Token_Type_Asterisk;
+   symbolSyntaxRules['*'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['*'].isSymbol = true;
+   symbolSyntaxRules['*'].isIdentifierCharacter = false;
 
-   singleSymbolSyntaxRules['='].isValid = true;
-   singleSymbolSyntaxRules['='].tokenType = Token_Type_Equal;
-   singleSymbolSyntaxRules['='].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['='].tokenType = Token_Type_Equal;
+   symbolSyntaxRules['='].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['='].isSymbol = true;
+   symbolSyntaxRules['='].isIdentifierCharacter = false;
 
-   singleSymbolSyntaxRules['<'].isValid = true;
-   singleSymbolSyntaxRules['<'].tokenType = Token_Type_AngleBracket_Left;
-   singleSymbolSyntaxRules['<'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['<'].tokenType = Token_Type_AngleBracket_Left;
+   symbolSyntaxRules['<'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['<'].isSymbol = true;
+   symbolSyntaxRules['<'].isIdentifierCharacter = false;
 
-   singleSymbolSyntaxRules['>'].isValid = true;
-   singleSymbolSyntaxRules['>'].tokenType = Token_Type_AngleBracket_Right;
-   singleSymbolSyntaxRules['>'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['>'].tokenType = Token_Type_AngleBracket_Right;
+   symbolSyntaxRules['>'].canAppearNextToAnyToken = false;
+   symbolSyntaxRules['>'].isSymbol = true;
+   symbolSyntaxRules['>'].isIdentifierCharacter = false;
 }
 
 static inline void AdvanceOne()
@@ -132,41 +155,148 @@ static inline char PeekNext()
    return sourceStringCharacterPointer[1];
 }
 
-static bool isIdentifier(char current)
+static inline char PeekAhead(size_t ahead)
 {
-   // Kludgy rules for non-alpha characters that can appear in an identifier,
-   // including the question mark, which can appear more than once in a row
-   return (isalpha(current)
-      || ((current == '_'
-            || current == '-'
-            || current == '#'
-            || current == '!'
-            || current == '?')
-         && !(isspace(PeekNext())
-            || PeekNext() == '?')));
+   return sourceStringCharacterPointer[ahead];
 }
 
-static bool isMultiCharacterSymbol(char current)
+static bool isIdentifier(char current)
+{
+   if(isalpha(current))
+   {
+      return true;
+   }
+   else if(symbolSyntaxRules[current].isIdentifierCharacter)
+   {
+      // Keep peeking ahead until you find an alpha character.
+      // If you hit a space, null terminator, or non-identifier, can't be an identifier
+      size_t i = 0;
+      char next = current;
+      while(next != '\0' || !isspace(next))
+      {
+         if(isalpha(next))
+         {
+            return true;
+         }
+         else if(symbolSyntaxRules[next].isIdentifierCharacter)
+         {
+            i++;
+            next = PeekAhead(i);
+         }
+         else
+         {
+            return false;
+         }
+      }
+   }
+
+   // Kludgy rules for non-alpha characters that can appear in an identifier,
+   // including the question mark, which can appear more than once in a row
+
+}
+
+static bool isMultiCharacterComparator(char current)
 {
    return ((current == '<'
          || current == '>'
-         || current == '!')
+         || current == '!'
+         || current == '=')
       && PeekNext() == '=');
+}
+
+static bool isMultiDot(char current)
+{
+   return (current == '.') && (PeekNext() == '.');
+}
+
+static bool isMultiQuestion(char current)
+{
+   return (current == '?') && (PeekNext() == '?');
 }
 
 static bool isSingleCharacterSymbol(char current)
 {
-   return singleSymbolSyntaxRules[current].isValid;
+   return symbolSyntaxRules[current].isSymbol;  // Multi character symbols already been eliminated
 }
 
 static void ConsumeSingleCharacterSymbol(char current, I_List_t *tokenList)
 {
-   static Token_t singleCharacterSymbol; // Declared static to ensure initialized to zero
-   singleCharacterSymbol.type = singleSymbolSyntaxRules[current].tokenType;
-   singleCharacterSymbol.value = 0;
+   newToken.type = symbolSyntaxRules[current].tokenType;
 
-   List_Add(tokenList, &singleCharacterSymbol);
+   if(current == '?')
+   {
+      newToken.value = 1;
+   }
+   else
+   {
+      newToken.value = 0;
+   }
+
+   List_Add(tokenList, &newToken);
    AdvanceOne();
+}
+
+static void ConsumeMultiCharacterComparator(char current, I_List_t *tokenList)
+{
+   switch(current)
+   {
+      case '<':
+         newToken.type = Token_Type_LessEqual;
+         newToken.value = 0;
+         break;
+      case '>':
+         newToken.type = Token_Type_GreaterEqual;
+         newToken.value = 0;
+         break;
+      case '!':
+         newToken.type = Token_Type_BangEqual;
+         newToken.value = 0;
+         break;
+      case '=':
+         newToken.type = Token_Type_EqualEqual;
+         newToken.value = 0;
+         break;
+   }
+
+   List_Add(tokenList, &newToken);
+   AdvanceOne();
+   AdvanceOne();
+}
+
+static void ConsumeMultiDot(char current, I_List_t *tokenList)
+{
+   if (PeekAhead(2) == '.')
+   {
+      newToken.type = Token_Type_DotDotDot;
+      AdvanceOne();
+      AdvanceOne();
+      AdvanceOne();
+   }
+   else
+   {
+      newToken.type = Token_Type_DotDot;
+      AdvanceOne();
+      AdvanceOne();
+   }
+
+   newToken.value = 0;
+   List_Add(tokenList, &newToken);
+}
+
+static void ConsumeMultiQuestion(char current, I_List_t *tokenList)
+{
+   size_t i = 1;
+   while(PeekNext() == '?')
+   {
+      i++;
+      AdvanceOne();
+   }
+   AdvanceOne();
+
+   newToken.type = Token_Type_Question;
+   newToken.value = i;
+
+   List_Add(tokenList, &newToken);
 }
 
 static void ReportUnknownSymbolError(char current, I_Error_t * errorHandler, I_List_t *tokenList)
@@ -186,22 +316,32 @@ static void lex(I_Lexer_t *interface, const char *source, I_List_t *tokenList)
    REINTERPRET(instance, interface, Lexer_Concrete_t *);
    sourceStringCharacterPointer = source;
 
-   FillSingleSymbolSyntaxRuleArray(); // Makes a big static table indexed by the characters themselves
+   FillSymbolSyntaxRuleArray(); // Makes a big static table indexed by the characters themselves
 
    char current;
    while((current = Peek()) != '\0')
    {
       if(isspace(current))
       {
-         AdvanceOne();
+         AdvanceOne();  // Ignore whitespace
       }
       else if(isIdentifier(current))
       {
+
+         Error_Report(instance->errorHandler, "Identifier");
          // ConsumeIdentifier();
       }
-      else if(isMultiCharacterSymbol(current))
+      else if(isMultiCharacterComparator(current))
       {
-         // ConsumeMultiCharacterSymbol();
+         ConsumeMultiCharacterComparator(current, tokenList);
+      }
+      else if(isMultiDot(current))
+      {
+         ConsumeMultiDot(current, tokenList);
+      }
+      else if(isMultiQuestion(current))
+      {
+         ConsumeMultiQuestion(current, tokenList);
       }
       else if(isSingleCharacterSymbol(current))
       {
