@@ -6,7 +6,7 @@ Without going into too much detail about the language's grammar, this document w
 
 **Identifiers** are all the "word-like" tokens in the language, including variables, functions, procedures, and type names. Meanwhile, **keywords** are reserved command words that have a special semantic meaning in the language.
 
-With a few exception (see [Special Types](#special-types)), all valid identifiers follow the form `[\w_-#!?]*[\w][\w_#-!?]*`, where `\w` are the word characters `[a-zA-Z]`. In other words, they must contain at least one word character, and any number of non-word characters `[_-#!?]`
+With a few exception (see [Special Types](#special-types)), all valid identifiers follow the form `[\w_-#!?]*[\w?][\w_#-!?]*`, where `\w` are the word characters `[a-zA-Z]`. In other words, they must contain at least one word character, and any number of non-word characters `[_-#!?]`
 
 Syntactically, keywords are a subset of identifiers, formed by a series of word characters (`[\w]+`). During the lexing step, no distinction needs to be made between identifiers and keywords and the binding of these tokens will be handled later by the parser. So they will not be listed here.
 

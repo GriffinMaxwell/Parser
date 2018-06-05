@@ -74,7 +74,7 @@ IGNORE_TEST(Lexer_Concrete, RecognizesRightCurlyBrace)
  * Symbolic tokens tests
  ***************************/
 
-TEST(Lexer_Concrete, RecognizesStringOfNonSpacedTokens)
+TEST(Lexer_Concrete, RecognizesStringOfNonSpacedSymbols)
 {
    const char *source = "()[]{},.`";
    const Token_t expectedTokens[] = {
@@ -95,9 +95,8 @@ TEST(Lexer_Concrete, RecognizesStringOfNonSpacedTokens)
 
 TEST(Lexer_Concrete, RecognizesManySymbolsWithSpacesInbetween)
 {
-   const char *source = "? @ # $ - + / * = < > <= >= != == . .. ...";
+   const char *source = "@ # $ - + / * = < > <= >= != == . .. ...";
    const Token_t expectedTokens[] = {
-      { Token_Type_Question, 1 },
       { Token_Type_Arroba, 0 },
       { Token_Type_Pound, 0 },
       { Token_Type_Dollar, 0 },
@@ -118,17 +117,12 @@ TEST(Lexer_Concrete, RecognizesManySymbolsWithSpacesInbetween)
    };
 
    Lexer_Lex(&lexer.interface, source, &tokens.interface);
-   TheLexedListOfTokensShouldBe(expectedTokens, 18);
-}
-
-TEST(Lexer_Concrete, RecognizesAnyNumberOfQuestionMarksInARowWithASingleQuestionMarkToken)
-{
-
+   TheLexedListOfTokensShouldBe(expectedTokens, 17);
 }
 
 TEST(Lexer_Concrete, NoSpaceBetweenTokensRequiringSpaceReportsErrors)
 {
-   const char *source = "?@#$:-+/*=<><=>=!===";
+   const char *source = "@#$:-+/*=<><=>=!===";
 
    ShouldReportThisError("");
    Lexer_Lex(&lexer.interface, source, &tokens.interface);

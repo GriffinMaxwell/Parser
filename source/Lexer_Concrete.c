@@ -62,11 +62,6 @@ static void FillSymbolSyntaxRuleArray()
    symbolSyntaxRules['.'].isSymbol = true;
    symbolSyntaxRules['.'].isIdentifierCharacter = false;
 
-   symbolSyntaxRules['?'].tokenType = Token_Type_Question;
-   symbolSyntaxRules['?'].canAppearNextToAnyToken = false;
-   symbolSyntaxRules['?'].isSymbol = true;
-   symbolSyntaxRules['?'].isIdentifierCharacter = false; // TODO: let me be true
-
    symbolSyntaxRules['`'].tokenType = Token_Type_Backtick;
    symbolSyntaxRules['`'].canAppearNextToAnyToken = true;
    symbolSyntaxRules['`'].isSymbol = true;
@@ -162,7 +157,7 @@ static inline char PeekAhead(size_t ahead)
 
 static bool isIdentifier(char current)
 {
-   if(isalpha(current))
+   if(isalpha(current) || (current == '?'))
    {
       return true;
    }
@@ -209,11 +204,6 @@ static bool isMultiDot(char current)
    return (current == '.') && (PeekNext() == '.');
 }
 
-static bool isMultiQuestion(char current)
-{
-   return (current == '?') && (PeekNext() == '?');
-}
-
 static bool isSingleCharacterSymbol(char current)
 {
    return symbolSyntaxRules[current].isSymbol;  // Multi character symbols already been eliminated
@@ -222,15 +212,7 @@ static bool isSingleCharacterSymbol(char current)
 static void ConsumeSingleCharacterSymbol(char current, I_List_t *tokenList)
 {
    newToken.type = symbolSyntaxRules[current].tokenType;
-
-   if(current == '?')
-   {
-      newToken.value = 1;
-   }
-   else
-   {
-      newToken.value = 0;
-   }
+   newToken.value = 0;
 
    List_Add(tokenList, &newToken);
    AdvanceOne();
@@ -283,22 +265,6 @@ static void ConsumeMultiDot(char current, I_List_t *tokenList)
    List_Add(tokenList, &newToken);
 }
 
-static void ConsumeMultiQuestion(char current, I_List_t *tokenList)
-{
-   size_t i = 1;
-   while(PeekNext() == '?')
-   {
-      i++;
-      AdvanceOne();
-   }
-   AdvanceOne();
-
-   newToken.type = Token_Type_Question;
-   newToken.value = i;
-
-   List_Add(tokenList, &newToken);
-}
-
 static void ReportUnknownSymbolError(char current, I_Error_t * errorHandler, I_List_t *tokenList)
 {
    char message[19] = "Unknown symbol ' '";
@@ -338,10 +304,6 @@ static void lex(I_Lexer_t *interface, const char *source, I_List_t *tokenList)
       else if(isMultiDot(current))
       {
          ConsumeMultiDot(current, tokenList);
-      }
-      else if(isMultiQuestion(current))
-      {
-         ConsumeMultiQuestion(current, tokenList);
       }
       else if(isSingleCharacterSymbol(current))
       {

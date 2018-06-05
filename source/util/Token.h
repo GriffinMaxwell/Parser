@@ -29,7 +29,6 @@ enum
    Token_Type_CurlyBrace_Right,
    Token_Type_Comma,
    Token_Type_Dot,
-   Token_Type_Question,
    Token_Type_Backtick,
    Token_Type_Arroba,
    Token_Type_Pound,
