@@ -17,8 +17,8 @@ typedef struct
    I_Error_t *errorHandler;
    I_List_t *tokenList;
    Token_t token;
-   char *beginning;
-   char *current;
+   const char *beginning;
+   const char *current;
 } Lexer_Concrete_t;
 
 /*

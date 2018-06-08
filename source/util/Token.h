@@ -10,6 +10,9 @@
 
 enum
 {
+   // Unknown
+   Token_Type_Unused,
+
    // Word-like things: identifiers & literals
    Token_Type_Identifier_Unknown,
    Token_Type_Identifier_Phrasal,
@@ -48,10 +51,7 @@ enum
    Token_Type_EqualEqual,
    Token_Type_LessEqual,
    Token_Type_GreaterEqual,
-   Token_Type_BangEqual,
-
-   // Unknown
-   Token_Type_Unknown
+   Token_Type_BangEqual
 };
 typedef uint8_t Token_Type_t;
 
@@ -61,9 +61,10 @@ typedef struct
 
    union
    {
-      char *lexeme;
+      const char *lexeme;
       long value;
    };
+   // TODO: add lexeme length to token and remove value
 } Token_t;
 
 #endif

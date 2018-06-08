@@ -13,8 +13,9 @@ TEST_GROUP(Lexer_Concrete)
 {
    Error_Mock_t errorMock;
    List_Calloc_t tokens;
-
    Lexer_Concrete_t lexer;
+
+   Token_t expectedToken;
 
    void setup()
    {
@@ -64,7 +65,8 @@ TEST_GROUP(Lexer_Concrete)
 
 TEST(Lexer_Concrete, RecognizesRightCurlyBrace)
 {
-   const Token_t expectedToken = { Token_Type_CurlyBrace_Right, 0 };
+   expectedToken.type = Token_Type_CurlyBrace_Right;
+   expectedToken.value = 0;
 
    Lexer_Lex(&lexer.interface, "}", &tokens.interface);
    TheTokenAtThisIndexShouldBe(0, &expectedToken);
@@ -74,7 +76,7 @@ TEST(Lexer_Concrete, RecognizesRightCurlyBrace)
  * Symbolic tokens tests
  ***************************/
 
-TEST(Lexer_Concrete, RecognizesStringOfNonSpacedSymbols)
+TEST(Lexer_Concrete, RecognizesStringOfNonTouchySymbols)
 {
    const char *source = "()[]{},.`";
    const Token_t expectedTokens[] = {
@@ -93,9 +95,9 @@ TEST(Lexer_Concrete, RecognizesStringOfNonSpacedSymbols)
    TheLexedListOfTokensShouldBe(expectedTokens, 9);
 }
 
-TEST(Lexer_Concrete, RecognizesManySymbolsWithSpacesInbetween)
+TEST(Lexer_Concrete, RecognizesManyTouchySymbolsWithSpacesInbetween)
 {
-   const char *source = "@ # $ - + / * = < > <= >= != == . .. ...";
+   const char *source = "@ # $ - + / * = < > <= >= != ==";
    const Token_t expectedTokens[] = {
       { Token_Type_Arroba, 0 },
       { Token_Type_Pound, 0 },
@@ -110,34 +112,31 @@ TEST(Lexer_Concrete, RecognizesManySymbolsWithSpacesInbetween)
       { Token_Type_LessEqual, 0 },
       { Token_Type_GreaterEqual, 0 },
       { Token_Type_BangEqual, 0 },
-      { Token_Type_EqualEqual, 0 },
-      { Token_Type_Dot, 0 },
-      { Token_Type_DotDot, 0 },
-      { Token_Type_DotDotDot, 0 },
+      { Token_Type_EqualEqual, 0 }
    };
 
    Lexer_Lex(&lexer.interface, source, &tokens.interface);
-   TheLexedListOfTokensShouldBe(expectedTokens, 17);
+   TheLexedListOfTokensShouldBe(expectedTokens, 14);
 }
 
 TEST(Lexer_Concrete, NoSpaceBetweenTokensRequiringSpaceReportsErrors)
 {
-   const char *source = "@#$-+/*=<><=>=!===";
+   const char *source = "@#$-+ /*=<><=>=!===";
 
-   ShouldReportThisError("Symbol '@' cannot appear next to ' ' or '#'");
-   ShouldReportThisError("Symbol '#' cannot appear next to '@' or '$'");
-   ShouldReportThisError("Symbol '$' cannot appear next to '#' or '-'");
-   ShouldReportThisError("Symbol '-' cannot appear next to '$' or '+'");
-   ShouldReportThisError("Symbol '+' cannot appear next to '-' or '/'");
-   ShouldReportThisError("Symbol '/' cannot appear next to '+' or '*'");
-   ShouldReportThisError("Symbol '*' cannot appear next to '/' or '='");
-   ShouldReportThisError("Symbol '=' cannot appear next to '*' or '<'");
-   ShouldReportThisError("Symbol '<' cannot appear next to '=' or '>'");
-   ShouldReportThisError("Symbol '>' cannot appear next to '<' or '<'");
-   ShouldReportThisError("Symbol '<=' cannot appear next to '>' or '>'");
-   ShouldReportThisError("Symbol '>=' cannot appear next to '=' or '!'");
-   ShouldReportThisError("Symbol '!=' cannot appear next to '=' or '='");
-   ShouldReportThisError("Symbol '==' cannot appear next to '=' or ' '");
+   ShouldReportThisError("\"Touchy\" symbol '@' next to another touchy symbol '#'");
+   ShouldReportThisError("\"Touchy\" symbol '#' next to other touchy symbols '@' and '$'");
+   ShouldReportThisError("\"Touchy\" symbol '$' next to other touchy symbols '#' and '-'");
+   ShouldReportThisError("\"Touchy\" symbol '-' next to other touchy symbols '$' and '+'");
+   ShouldReportThisError("\"Touchy\" symbol '+' next to another touchy symbol '-'");
+   ShouldReportThisError("\"Touchy\" symbol '/' next to another touchy symbol '*'");
+   ShouldReportThisError("\"Touchy\" symbol '*' next to other touchy symbols '/' and '='");
+   ShouldReportThisError("\"Touchy\" symbol '=' next to other touchy symbols '*' and '<'");
+   ShouldReportThisError("\"Touchy\" symbol '<' next to other touchy symbols '=' and '>'");
+   ShouldReportThisError("\"Touchy\" symbol '>' next to other touchy symbols '<' and '<'");
+   ShouldReportThisError("\"Touchy\" symbol '<=' next to other touchy symbols '>' and '>'");
+   ShouldReportThisError("\"Touchy\" symbol '>=' next to other touchy symbols '=' and '!'");
+   ShouldReportThisError("\"Touchy\" symbol '!=' next to other touchy symbols '=' and '='");
+   ShouldReportThisError("\"Touchy\" symbol '==' next to another touchy symbol '='");
    Lexer_Lex(&lexer.interface, source, &tokens.interface);
 }
 
@@ -164,6 +163,12 @@ IGNORE_TEST(Lexer_Concrete, ReportsErrorForUnknownNonPrintableSymbols)
 }
 
 IGNORE_TEST(Lexer_Concrete, ReportsErrorForNonAscii)
+{
+
+}
+
+// Special Case tests
+IGNORE_TEST(Lexer_Concrete, SpecialCase_Dot)
 {
 
 }
