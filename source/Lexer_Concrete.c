@@ -271,7 +271,7 @@ static void HandleSpecialCase_SingleQuote(Lexer_Concrete_t *instance)
 
 static void ConsumeIdentifier(Lexer_Concrete_t *instance)
 {
-   instance->token.type = Token_Type_Identifier_Unknown;
+   instance->token.type = Token_Type_Identifier;
    instance->token.lexeme = instance->current;
 
    bool foundLetter = false;
@@ -372,7 +372,7 @@ static void ConsumeNumberLiteralOrSpecialIdentifier(Lexer_Concrete_t *instance)
    if(!foundDecimalPoint
       && (PeekNext(instance) == '\'' || PeekNext(instance) == '"'))
    {
-      instance->token.type = Token_Type_Identifier_Unknown;
+      instance->token.type = Token_Type_Identifier;
    }
 
    List_Add(instance->tokenList, &instance->token);
