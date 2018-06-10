@@ -19,6 +19,7 @@ typedef struct
    Token_t token;
    const char *beginning;
    const char *current;
+   size_t line;
 } Lexer_Concrete_t;
 
 /*

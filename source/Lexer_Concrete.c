@@ -13,17 +13,9 @@ enum
 {
    Touchy_DontCare,
    Touchy_Yes,
-   Touchy_No,
-
-   Usage_DontCare,
-   Usage_Special,
-   Usage_Identifier,
-   Usage_Symbol_Single,
-   Usage_Symbol_OrIdentifier,
-   Usage_Symbol_FormsDigraphs_WithEqualSign
+   Touchy_No
 };
 typedef uint8_t Rule_Touchy_t;
-typedef uint8_t Rule_Usage_t;
 
 typedef struct
 {
@@ -31,7 +23,6 @@ typedef struct
    Token_Type_t type;
    Token_Type_t secondaryType;
    Rule_Touchy_t touch;
-   Rule_Usage_t usage;
 } Rule_Entry_t;
 
 /*********************************
@@ -67,20 +58,30 @@ static inline void AdvanceMany(Lexer_Concrete_t *instance, size_t many)
    instance->current += many;
 }
 
+static void AddToken(Lexer_Concrete_t *instance, Token_Type_t type, const char *lexeme, size_t length, size_t line)
+{
+   instance->token.type = type;
+   instance->token.lexeme = lexeme;
+   instance->token.length = length;
+   instance->token.line = line;
+
+   List_Add(instance->tokenList, &instance->token);
+}
+
 // Forward declaration because circular access ruleTable <--> functions
 static void Ignore(Lexer_Concrete_t *instance);
+static void IncrementLineCounter(Lexer_Concrete_t *instance);
 static void ReportUnexpectedCharacter(Lexer_Concrete_t *instance);
 static void HandleSpecialCase_SingleQuote(Lexer_Concrete_t *instance);
 static void ConsumeIdentifier(Lexer_Concrete_t *instance);
-static void CheckSpacing(Lexer_Concrete_t *instance, uint8_t symbolLength);
-static void ConsumeMany(Lexer_Concrete_t *instance, uint8_t symbolLength, Token_Type_t type);
+static void CheckSpacing(Lexer_Concrete_t *instance, uint8_t length);
+static void ConsumeWideSymbol(Lexer_Concrete_t *instance, uint8_t length, Token_Type_t type);
 static void ConsumeSymbol(Lexer_Concrete_t *instance);
 static void CheckDigraphWithEqualSignThenConsumeSymbol(Lexer_Concrete_t *instance);
 static void ConsumeNumberLiteralOrSpecialIdentifier(Lexer_Concrete_t *instance);
 static void ConsumeStringLiteral(Lexer_Concrete_t *instance);
 static void CheckDigraphWithEqualSignThenConsumeSymbol(Lexer_Concrete_t *instance);
 static void SpecialCase_Exclamation(Lexer_Concrete_t *instance);
-static void CheckNumberOrIdentifier(Lexer_Concrete_t *instance);
 static void SpecialCase_Pound(Lexer_Concrete_t *instance);
 static void SpecialCase_Dot(Lexer_Concrete_t *instance);
 static void SpecialCase_Colon(Lexer_Concrete_t *instance);
@@ -102,11 +103,11 @@ static const Rule_Entry_t ruleTable[128] =
    { .action = ReportUnexpectedCharacter }, // ACK
    { .action = ReportUnexpectedCharacter }, // bell
    { .action = ReportUnexpectedCharacter }, // backspace
-   { .action = Ignore },              // horizontal tab
-   { .action = Ignore },              // LF
-   { .action = Ignore },              // vertical tab
-   { .action = Ignore },              // FF
-   { .action = Ignore },              // CR
+   { .action = Ignore },                    // horizontal tab
+   { .action = IncrementLineCounter },      // LF
+   { .action = Ignore },                    // vertical tab
+   { .action = Ignore },                    // FF
+   { .action = Ignore },                    // CR
    { .action = ReportUnexpectedCharacter }, // shift out
    { .action = ReportUnexpectedCharacter }, // shift in
    { .action = ReportUnexpectedCharacter }, // data link escape
@@ -238,6 +239,7 @@ static void lex(I_Lexer_t *interface, const char *source, I_List_t *tokenList)
    instance->beginning = source;
    instance->current = source;
    instance->tokenList = tokenList;
+   instance->line = 1;
 
    while(Peek(instance) != '\0')
    {
@@ -259,9 +261,25 @@ static void Ignore(Lexer_Concrete_t *instance)
    AdvanceOne(instance);
 }
 
+static void IncrementLineCounter(Lexer_Concrete_t *instance)
+{
+   instance->line++;
+}
+
 static void ReportUnexpectedCharacter(Lexer_Concrete_t *instance)
 {
-   Error_Report(instance->errorHandler, "Unknown!!");
+   if(iscntrl(Peek(instance)))
+   {
+      Error_Report(instance->errorHandler, "Unexpected non-printable character");
+   }
+   else
+   {
+      char message[25] = "Unexpected character ' '";
+      message[22] = Peek(instance);
+      Error_Report(instance->errorHandler, message);
+   }
+
+   AdvanceOne(instance);
 }
 
 static void HandleSpecialCase_SingleQuote(Lexer_Concrete_t *instance)
@@ -271,27 +289,22 @@ static void HandleSpecialCase_SingleQuote(Lexer_Concrete_t *instance)
 
 static void ConsumeIdentifier(Lexer_Concrete_t *instance)
 {
-   instance->token.type = Token_Type_Identifier;
-   instance->token.lexeme = instance->current;
+   const char *beginning = instance->current;
+   size_t length = 0;
+   bool validIdentifier = false;
 
-   bool foundLetter = false;
-   while(isalpha(Peek(instance))
-      || Peek(instance) == '_'
-      || Peek(instance) == '-'
-      || Peek(instance) == '#'
-      || Peek(instance) == '!'
-      || Peek(instance) == '?')
+   while(isalpha(Peek(instance)) || Peek(instance) == '_' || Peek(instance) == '-'
+         || Peek(instance) == '#' || Peek(instance) == '!' || Peek(instance) == '?')
    {
-      if(isalpha(Peek(instance)) || Peek(instance) == '?')
-      {
-         foundLetter = true;
-      }
+      validIdentifier = validIdentifier || (isalpha(Peek(instance)) || Peek(instance) == '?');
+
       AdvanceOne(instance);
+      length++;
    }
 
-   if(foundLetter)
+   if(validIdentifier)
    {
-      List_Add(instance->tokenList, &instance->token);
+      AddToken(instance, Token_Type_Identifier, beginning, length, instance->line);
    }
    else
    {
@@ -299,121 +312,119 @@ static void ConsumeIdentifier(Lexer_Concrete_t *instance)
    }
 }
 
-static void CheckSpacing(Lexer_Concrete_t *instance, uint8_t symbolLength)
+static void CheckSpacing(Lexer_Concrete_t *instance, uint8_t length)
 {
    char message[66];
    bool touchyOnLeft = ruleTable[PeekPrevious(instance)].touch == Touchy_Yes;
-   bool touchyOnRight = ruleTable[PeekAhead(instance, symbolLength)].touch == Touchy_Yes;
+   bool touchyOnRight = ruleTable[PeekAhead(instance, length)].touch == Touchy_Yes;
 
    if(touchyOnLeft && touchyOnRight)
    {
-      sprintf(message, "\"Touchy\" symbol '%.*s' next to other touchy symbols '%c' and '%c'",  symbolLength, instance->current, PeekPrevious(instance), PeekAhead(instance, symbolLength));
+      sprintf(message, "\"Touchy\" symbol '%.*s' next to other touchy symbols '%c' and '%c'",  length, instance->current, PeekPrevious(instance), PeekAhead(instance, length));
       Error_Report(instance->errorHandler, message);
    }
    else if(touchyOnLeft)
    {
-      sprintf(message, "\"Touchy\" symbol '%.*s' next to another touchy symbol '%c'",  symbolLength, instance->current, PeekPrevious(instance));
+      sprintf(message, "\"Touchy\" symbol '%.*s' next to another touchy symbol '%c'",  length, instance->current, PeekPrevious(instance));
       Error_Report(instance->errorHandler, message);
    }
    else if(touchyOnRight)
    {
-      sprintf(message, "\"Touchy\" symbol '%.*s' next to another touchy symbol '%c'",  symbolLength, instance->current, PeekAhead(instance, symbolLength));
+      sprintf(message, "\"Touchy\" symbol '%.*s' next to another touchy symbol '%c'",  length, instance->current, PeekAhead(instance, length));
       Error_Report(instance->errorHandler, message);
    }
 }
 
-static void ConsumeMany(Lexer_Concrete_t *instance, uint8_t symbolLength, Token_Type_t type)
+static void ConsumeWideSymbol(Lexer_Concrete_t *instance, uint8_t length, Token_Type_t type)
 {
    if(ruleTable[Peek(instance)].touch == Touchy_Yes)
    {
-      CheckSpacing(instance, symbolLength);
+      CheckSpacing(instance, length);
    }
 
-   instance->token.type = type;
-   instance->token.value = 0;
-   List_Add(instance->tokenList, &instance->token);
-   AdvanceMany(instance, symbolLength);
+   AddToken(instance, type, instance->current, length, instance->line);
+   AdvanceMany(instance, length);
 }
 
 static void ConsumeSymbol(Lexer_Concrete_t *instance)
 {
-   ConsumeMany(instance, 1, ruleTable[Peek(instance)].type);
+   ConsumeWideSymbol(instance, 1, ruleTable[Peek(instance)].type);
 }
 
 static void CheckDigraphWithEqualSignThenConsumeSymbol(Lexer_Concrete_t *instance)
 {
    if(PeekNext(instance) == '=')
    {
-
-      ConsumeMany(instance, 2, ruleTable[Peek(instance)].secondaryType);
+      ConsumeWideSymbol(instance, 2, ruleTable[Peek(instance)].secondaryType);
    }
    else
    {
-      ConsumeMany(instance, 1, ruleTable[Peek(instance)].type);
+      ConsumeWideSymbol(instance, 1, ruleTable[Peek(instance)].type);
    }
 }
 
-// Assuming first
 static void ConsumeNumberLiteralOrSpecialIdentifier(Lexer_Concrete_t *instance)
 {
-   instance->token.type = Token_Type_Literal_Number;
-   instance->token.lexeme = instance->current;
-   // TODO: lexeme length
+   Token_Type_t type = Token_Type_Literal_Number;
+   const char *beginning = instance->current;
+   size_t length = 1;
 
-   bool foundDecimalPoint = (Peek(instance) == '.');
+   bool containsDecimalPoint = (Peek(instance) == '.');
    AdvanceOne(instance);
 
-   while(isdigit(Peek(instance)) || (!foundDecimalPoint && (Peek(instance) == '.')))
+   while(isdigit(Peek(instance)) || (!containsDecimalPoint && (Peek(instance) == '.')))
    {
-      foundDecimalPoint = foundDecimalPoint || Peek(instance) == '.';
+      containsDecimalPoint = containsDecimalPoint || Peek(instance) == '.';
       AdvanceOne(instance);
+      length++;
    }
 
-   if(!foundDecimalPoint
-      && (PeekNext(instance) == '\'' || PeekNext(instance) == '"'))
+   if(!containsDecimalPoint && (PeekNext(instance) == '\'' || PeekNext(instance) == '"'))
    {
-      instance->token.type = Token_Type_Identifier;
+      type = Token_Type_Identifier;
+      AdvanceOne(instance);
+      length++;
    }
 
-   List_Add(instance->tokenList, &instance->token);
+   AddToken(instance, type, beginning, length, instance->line);
 }
 
 static void ConsumeStringLiteral(Lexer_Concrete_t *instance)
 {
-   AdvanceOne(instance);   // Past opening "
-   instance->token.type = Token_Type_Literal_String;
-   instance->token.lexeme = instance->current;
-   // TODO: lexeme length
+   const char *beginning = instance->current;
+   size_t line = instance->line;
+   size_t length = 1;
 
+   AdvanceOne(instance);   // Past opening "
    while(Peek(instance) != '"')
    {
       if(Peek(instance) == '\0')
       {
          Error_Report(instance->errorHandler, "String literal missing ending \"");
-         break;
+         return;
       }
       if(Peek(instance) == '\n')
       {
          Error_Report(instance->errorHandler, "String literal not contained on one line.");
+         instance->line++;
          // Do not break, so it will keep consuming on the next line to the end of the string
       }
 
       AdvanceOne(instance);
+      length++;
    }
 
-   if(Peek(instance) == '"')
-   {
-      AdvanceOne(instance);
-   }
+   AdvanceOne(instance);   // Past closing "
+   length++;
 
-   List_Add(instance->tokenList, &instance->token);
+   AddToken(instance, Token_Type_Literal_String, beginning, length, instance->line);
 }
 
 static void SpecialCase_Exclamation(Lexer_Concrete_t *instance)
 {
    if(PeekNext(instance) == '=')
    {
-      ConsumeMany(instance, 2, ruleTable[Peek(instance)].secondaryType);
+      ConsumeWideSymbol(instance, 2, ruleTable[Peek(instance)].secondaryType);
    }
    else
    {
@@ -439,13 +450,13 @@ static void SpecialCase_Pound(Lexer_Concrete_t *instance)
    }
    else
    {
-      ConsumeMany(instance, 1, Token_Type_Pound);
+      ConsumeWideSymbol(instance, 1, Token_Type_Pound);
    }
 }
 
 static void SpecialCase_Dot(Lexer_Concrete_t *instance)
 {
-   ConsumeMany(instance, 1, Token_Type_Dot);
+   ConsumeWideSymbol(instance, 1, Token_Type_Dot);
 }
 
 static void SpecialCase_Colon(Lexer_Concrete_t *instance)
@@ -455,7 +466,7 @@ static void SpecialCase_Colon(Lexer_Concrete_t *instance)
 
 static void SpecialCase_Dash(Lexer_Concrete_t *instance)
 {
-   ConsumeMany(instance, 1, Token_Type_Dash);
+   ConsumeWideSymbol(instance, 1, Token_Type_Dash);
 }
 
 static void SpecialCase_Tilde(Lexer_Concrete_t *instance)
