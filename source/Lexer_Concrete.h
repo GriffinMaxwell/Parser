@@ -1,6 +1,6 @@
 /***
  * File: Lexer_Concrete.h
- * Desc: Implementation of I_Lexer
+ * Desc: Implementation of I_Lexer using a static jump table for each ASCII character 
  */
 
 #ifndef _LEXER_CONCRETE_H

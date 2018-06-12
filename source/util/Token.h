@@ -10,7 +10,7 @@
 
 enum
 {
-   Token_Type_Unused,
+   Token_Type_Unused = 0,
 
    Token_Type_AngleBracket_Left,
    Token_Type_AngleBracket_Right,
