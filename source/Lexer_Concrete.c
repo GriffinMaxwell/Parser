@@ -23,7 +23,7 @@ typedef struct
    Token_Type_t type;
    Touchiness_t touchiness;
    Token_Type_t digraphType;
-} Rule_Entry_t;
+} CharacterInfo_Entry_t;
 
 /*********************************
 * Forward declarations because of circular calls between table and functions
@@ -87,7 +87,7 @@ static void AddToken(Lexer_Concrete_t *instance, Token_Type_t type, const char *
    List_Add(instance->tokenList, &instance->token);
 }
 
-static const Rule_Entry_t ruleTable[128] =
+static const CharacterInfo_Entry_t characterInfoTable[128] =
 {
    { .what = ReportUnexpectedCharacter }, // null
    { .what = ReportUnexpectedCharacter }, // start of heading
@@ -240,13 +240,13 @@ static void ReportUnexpectedCharacter(Lexer_Concrete_t *instance)
 {
    if(iscntrl(Peek(instance)))
    {
-      Error_Report(instance->errorHandler, "Unexpected non-printable character");
+      Error_Report(instance->errorHandler, instance->line, "Unexpected non-printable character");
    }
    else
    {
       char message[25] = "Unexpected character ' '";
       message[22] = Peek(instance);
-      Error_Report(instance->errorHandler, message);
+      Error_Report(instance->errorHandler, instance->line, message);
    }
 
    AdvanceOne(instance);
@@ -275,30 +275,30 @@ static void Identifier(Lexer_Concrete_t *instance)
    {
       char message[38+length];
       sprintf(message, "Identifier name missing [a-zA-Z?]: '%.*s'", length, beginning);
-      Error_Report(instance->errorHandler, message);
+      Error_Report(instance->errorHandler, instance->line, message);
    }
 }
 
 static void CheckSpacing(Lexer_Concrete_t *instance, uint8_t length)
 {
    char message[66];
-   bool touchyOnLeft = ruleTable[PeekPrevious(instance)].touchiness == Touchy_Yes;
-   bool touchyOnRight = ruleTable[PeekAhead(instance, length)].touchiness == Touchy_Yes;
+   bool touchyOnLeft = characterInfoTable[PeekPrevious(instance)].touchiness == Touchy_Yes;
+   bool touchyOnRight = characterInfoTable[PeekAhead(instance, length)].touchiness == Touchy_Yes;
 
    if(touchyOnLeft && touchyOnRight)
    {
       sprintf(message, "\"Touchy\" symbol '%.*s' next to other touchy symbols '%c' and '%c'",  length, instance->current, PeekPrevious(instance), PeekAhead(instance, length));
-      Error_Report(instance->errorHandler, message);
+      Error_Report(instance->errorHandler, instance->line, message);
    }
    else if(touchyOnLeft)
    {
       sprintf(message, "\"Touchy\" symbol '%.*s' next to another touchy symbol '%c'",  length, instance->current, PeekPrevious(instance));
-      Error_Report(instance->errorHandler, message);
+      Error_Report(instance->errorHandler, instance->line, message);
    }
    else if(touchyOnRight)
    {
       sprintf(message, "\"Touchy\" symbol '%.*s' next to another touchy symbol '%c'",  length, instance->current, PeekAhead(instance, length));
-      Error_Report(instance->errorHandler, message);
+      Error_Report(instance->errorHandler, instance->line, message);
    }
 }
 
@@ -315,18 +315,18 @@ static void WideSymbol(Lexer_Concrete_t *instance, uint8_t width, Token_Type_t t
 
 static void Symbol(Lexer_Concrete_t *instance)
 {
-   WideSymbol(instance, 1, ruleTable[Peek(instance)].type, ruleTable[Peek(instance)].touchiness);
+   WideSymbol(instance, 1, characterInfoTable[Peek(instance)].type, characterInfoTable[Peek(instance)].touchiness);
 }
 
 static void DigraphOrSymbol(Lexer_Concrete_t *instance)
 {
    if(PeekNext(instance) == '=')
    {
-      WideSymbol(instance, 2, ruleTable[Peek(instance)].digraphType, Touchy_Yes);
+      WideSymbol(instance, 2, characterInfoTable[Peek(instance)].digraphType, Touchy_Yes);
    }
    else
    {
-      WideSymbol(instance, 1, ruleTable[Peek(instance)].type, ruleTable[Peek(instance)].touchiness);
+      WideSymbol(instance, 1, characterInfoTable[Peek(instance)].type, characterInfoTable[Peek(instance)].touchiness);
    }
 }
 
@@ -367,12 +367,12 @@ static void StringLiteral(Lexer_Concrete_t *instance)
    {
       if(Peek(instance) == '\0')
       {
-         Error_Report(instance->errorHandler, "String literal missing ending \"");
+         Error_Report(instance->errorHandler, instance->line, "String literal missing ending \"");
          return;
       }
       if(Peek(instance) == '\n')
       {
-         Error_Report(instance->errorHandler, "String literal not contained on one line.");
+         Error_Report(instance->errorHandler, instance->line, "String literal not contained on one line.");
          instance->line++;
       }
 
@@ -390,7 +390,7 @@ static void Exclamation(Lexer_Concrete_t *instance)
 {
    if(PeekNext(instance) == '=')
    {
-      WideSymbol(instance, 2, ruleTable['!'].digraphType, Touchy_Yes);
+      WideSymbol(instance, 2, characterInfoTable['!'].digraphType, Touchy_Yes);
    }
    else
    {
@@ -411,7 +411,7 @@ static void Pound(Lexer_Concrete_t *instance)
    }
    else
    {
-      WideSymbol(instance, 1, Token_Type_Pound, ruleTable['#'].touchiness);
+      WideSymbol(instance, 1, Token_Type_Pound, characterInfoTable['#'].touchiness);
    }
 }
 
@@ -421,7 +421,7 @@ static void Dot(Lexer_Concrete_t *instance)
    {
       if(PeekPrevious(instance) != ' ')
       {
-         Error_Report(instance->errorHandler, "Missing space before decimal number with no leading zero");
+         Error_Report(instance->errorHandler, instance->line, "Missing space before decimal number with no leading zero");
       }
 
       NumberLiteralOrIdentifier(instance);
@@ -430,16 +430,16 @@ static void Dot(Lexer_Concrete_t *instance)
    {
       if(PeekAhead(instance, 2) == '.')
       {
-         WideSymbol(instance, 3, Token_Type_DotDotDot, ruleTable['.'].touchiness);
+         WideSymbol(instance, 3, Token_Type_DotDotDot, characterInfoTable['.'].touchiness);
       }
       else
       {
-         WideSymbol(instance, 2, Token_Type_DotDot, ruleTable['.'].touchiness);
+         WideSymbol(instance, 2, Token_Type_DotDot, characterInfoTable['.'].touchiness);
       }
    }
    else
    {
-      WideSymbol(instance, 1, Token_Type_Dot, ruleTable['.'].touchiness);
+      WideSymbol(instance, 1, Token_Type_Dot, characterInfoTable['.'].touchiness);
    }
 }
 
@@ -463,7 +463,7 @@ static void Colon(Lexer_Concrete_t *instance)
       }
       else
       {
-         Error_Report(instance->errorHandler, "Missing space after ':'");
+         Error_Report(instance->errorHandler, instance->line, "Missing space after ':'");
       }
    }
 }
@@ -481,15 +481,16 @@ static void Dash(Lexer_Concrete_t *instance)
    }
    else
    {
-      WideSymbol(instance, 1, Token_Type_Dash, ruleTable['-'].touchiness);
+      WideSymbol(instance, 1, Token_Type_Dash, characterInfoTable['-'].touchiness);
    }
 }
 
 static void Tilde(Lexer_Concrete_t *instance)
 {
-   WideSymbol(instance, 1, Token_Type_Identifier, ruleTable['~'].touchiness);
+   WideSymbol(instance, 1, Token_Type_Identifier, characterInfoTable['~'].touchiness);
 }
 
+// TODO: merge overlap with literal function so there isn't as much copied code
 static void SymbolicLiteral(Lexer_Concrete_t *instance)
 {
    const char *beginning = instance->current;
@@ -513,7 +514,9 @@ static void SymbolicLiteral(Lexer_Concrete_t *instance)
    }
    else
    {
-      Error_Report(instance->errorHandler, "Bad symbol name.");
+      char message[34+length];
+      sprintf(message, "Symbol name missing [a-zA-Z?]: '%.*s'", length, beginning);
+      Error_Report(instance->errorHandler, instance->line, message);
    }
 }
 
@@ -532,11 +535,11 @@ static void lex(I_Lexer_t *interface, const char *source, I_List_t *tokenList)
    {
       if(Peek(instance) > 0)
       {
-         ruleTable[Peek(instance)].what(instance);
+         characterInfoTable[Peek(instance)].what(instance);
       }
       else
       {
-         Error_Report(instance->errorHandler, "Unexpected non-ascii character");
+         Error_Report(instance->errorHandler, instance->line, "Unexpected non-ascii character");
          AdvanceOne(instance);
       }
    }

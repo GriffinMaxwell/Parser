@@ -4,7 +4,6 @@
 
 extern "C"
 {
-#include <limits.h>
 #include <string.h>
 #include "Lexer_Concrete.h"
 #include "List_Calloc.h"
@@ -34,19 +33,21 @@ TEST_GROUP(Lexer_Concrete)
       mock().clear();
    }
 
-   void ShouldReportThisError(const char *message)
+   void ShouldReportThisError(size_t line, const char *message)
    {
       mock()
          .expectOneCall("report")
          .onObject(&errorMock)
+         .withParameter("line", line)
          .withParameter("message", message);
    }
 
-   void ShouldReportThisErrorNTimes(const char *message, int N)
+   void ShouldReportThisErrorNTimes(size_t line, const char *message, int N)
    {
       mock()
          .expectNCalls(N, "report")
          .onObject(&errorMock)
+         .withParameter("line", line)
          .withParameter("message", message);
    }
 
@@ -67,20 +68,7 @@ TEST_GROUP(Lexer_Concrete)
 };
 
 /***************************
- * Basic single symbol test
- ***************************/
-
-TEST(Lexer_Concrete, RecognizesRightCurlyBrace)
-{
-   const char *source = "}";
-   const Token_t expectedToken = { Token_Type_CurlyBrace_Right, source, 1, 1 };
-
-   Lexer_Lex(&lexer.interface, source, &tokens.interface);
-   TheTokenAtThisIndexShouldBe(0, &expectedToken);
-}
-
-/***************************
- * Symbolic tokens tests
+ * Symbol tokens tests
  ***************************/
 TEST(Lexer_Concrete, RecognizesStringOfNonTouchySymbols)
 {
@@ -101,7 +89,7 @@ TEST(Lexer_Concrete, RecognizesStringOfNonTouchySymbols)
    TheResultingTokensShouldBe(expectedTokens, 9);
 }
 
-TEST(Lexer_Concrete, RecognizesManyTouchySymbolsWithSpacesInbetween)
+TEST(Lexer_Concrete, RecognizesTouchySymbolsWithSpacesInbetween)
 {
    const char *source = "@ # $ - + / * = < > <= >= != ==";
    const Token_t expectedTokens[] = {
@@ -154,7 +142,7 @@ TEST(Lexer_Concrete, RecognizesStringLiteral)
    TheTokenAtThisIndexShouldBe(0, &expectedToken);
 }
 
-TEST(Lexer_Concrete, RcognizesSymbolicLiteral)
+TEST(Lexer_Concrete, RecognizesSymbolicLiteral)
 {
    const char *source = ":this-is-a-symbolic-literal?";
    const Token_t expectedToken = { Token_Type_Literal_Symbol, &source[0], 28, 1};
@@ -175,7 +163,7 @@ TEST(Lexer_Concrete, RecognizesNumberLiterals)
       { Token_Type_Literal_Number, &source[35], 5,  1 }
    };
 
-   ShouldReportThisError("Missing space before decimal number with no leading zero");
+   ShouldReportThisError(1, "Missing space before decimal number with no leading zero");
    Lexer_Lex(&lexer.interface, source, &tokens.interface);
    TheResultingTokensShouldBe(expectedTokens, 6);
 }
@@ -267,10 +255,10 @@ TEST(Lexer_Concrete, SpecialCase_Tilde)
       { Token_Type_Identifier, &source[21], 4, 1}
    };
 
-   ShouldReportThisError("\"Touchy\" symbol '~' next to another touchy symbol 'o'");
-   ShouldReportThisError("\"Touchy\" symbol '~' next to other touchy symbols 'e' and 'n'");
-   ShouldReportThisError("\"Touchy\" symbol '~' next to another touchy symbol 'e'");
-   ShouldReportThisError("\"Touchy\" symbol '~' next to other touchy symbols 'r' and 'n'");
+   ShouldReportThisError(1, "\"Touchy\" symbol '~' next to another touchy symbol 'o'");
+   ShouldReportThisError(1, "\"Touchy\" symbol '~' next to other touchy symbols 'e' and 'n'");
+   ShouldReportThisError(1, "\"Touchy\" symbol '~' next to another touchy symbol 'e'");
+   ShouldReportThisError(1, "\"Touchy\" symbol '~' next to other touchy symbols 'r' and 'n'");
    Lexer_Lex(&lexer.interface, source, &tokens.interface);
    TheResultingTokensShouldBe(expectedTokens, 3);
 }
@@ -282,10 +270,21 @@ TEST(Lexer_Concrete, BadIdentifierNameReportsErrors)
 {
    const char *source = "____ #### --_- !!";
 
-   ShouldReportThisError("Identifier name missing [a-zA-Z?]: '____'");
-   ShouldReportThisError("Identifier name missing [a-zA-Z?]: '####'");
-   ShouldReportThisError("Identifier name missing [a-zA-Z?]: '--_-'");
-   ShouldReportThisError("Identifier name missing [a-zA-Z?]: '!!'");
+   ShouldReportThisError(1, "Identifier name missing [a-zA-Z?]: '____'");
+   ShouldReportThisError(1, "Identifier name missing [a-zA-Z?]: '####'");
+   ShouldReportThisError(1, "Identifier name missing [a-zA-Z?]: '--_-'");
+   ShouldReportThisError(1, "Identifier name missing [a-zA-Z?]: '!!'");
+   Lexer_Lex(&lexer.interface, source, &tokens.interface);
+}
+
+TEST(Lexer_Concrete, BadSymbolicLiteralNameReportsErrors)
+{
+   const char *source = ":____ :#### :--_- :!!";
+
+   ShouldReportThisError(1, "Symbol name missing [a-zA-Z?]: ':____'");
+   ShouldReportThisError(1, "Symbol name missing [a-zA-Z?]: ':####'");
+   ShouldReportThisError(1, "Symbol name missing [a-zA-Z?]: ':--_-'");
+   ShouldReportThisError(1, "Symbol name missing [a-zA-Z?]: ':!!'");
    Lexer_Lex(&lexer.interface, source, &tokens.interface);
 }
 
@@ -309,20 +308,20 @@ TEST(Lexer_Concrete, NoSpaceBetweenTouchySymbolsReportsErrors)
       { Token_Type_EqualEqual,         &source[17], 2, 1 }
    };
 
-   ShouldReportThisError("\"Touchy\" symbol '@' next to another touchy symbol '#'");
-   ShouldReportThisError("\"Touchy\" symbol '#' next to other touchy symbols '@' and '$'");
-   ShouldReportThisError("\"Touchy\" symbol '$' next to other touchy symbols '#' and '-'");
-   ShouldReportThisError("\"Touchy\" symbol '-' next to other touchy symbols '$' and '+'");
-   ShouldReportThisError("\"Touchy\" symbol '+' next to another touchy symbol '-'");
-   ShouldReportThisError("\"Touchy\" symbol '/' next to another touchy symbol '*'");
-   ShouldReportThisError("\"Touchy\" symbol '*' next to other touchy symbols '/' and '='");
-   ShouldReportThisError("\"Touchy\" symbol '=' next to other touchy symbols '*' and '<'");
-   ShouldReportThisError("\"Touchy\" symbol '<' next to other touchy symbols '=' and '>'");
-   ShouldReportThisError("\"Touchy\" symbol '>' next to other touchy symbols '<' and '<'");
-   ShouldReportThisError("\"Touchy\" symbol '<=' next to other touchy symbols '>' and '>'");
-   ShouldReportThisError("\"Touchy\" symbol '>=' next to other touchy symbols '=' and '!'");
-   ShouldReportThisError("\"Touchy\" symbol '!=' next to other touchy symbols '=' and '='");
-   ShouldReportThisError("\"Touchy\" symbol '==' next to another touchy symbol '='");
+   ShouldReportThisError(1, "\"Touchy\" symbol '@' next to another touchy symbol '#'");
+   ShouldReportThisError(1, "\"Touchy\" symbol '#' next to other touchy symbols '@' and '$'");
+   ShouldReportThisError(1, "\"Touchy\" symbol '$' next to other touchy symbols '#' and '-'");
+   ShouldReportThisError(1, "\"Touchy\" symbol '-' next to other touchy symbols '$' and '+'");
+   ShouldReportThisError(1, "\"Touchy\" symbol '+' next to another touchy symbol '-'");
+   ShouldReportThisError(1, "\"Touchy\" symbol '/' next to another touchy symbol '*'");
+   ShouldReportThisError(1, "\"Touchy\" symbol '*' next to other touchy symbols '/' and '='");
+   ShouldReportThisError(1, "\"Touchy\" symbol '=' next to other touchy symbols '*' and '<'");
+   ShouldReportThisError(1, "\"Touchy\" symbol '<' next to other touchy symbols '=' and '>'");
+   ShouldReportThisError(1, "\"Touchy\" symbol '>' next to other touchy symbols '<' and '<'");
+   ShouldReportThisError(1, "\"Touchy\" symbol '<=' next to other touchy symbols '>' and '>'");
+   ShouldReportThisError(1, "\"Touchy\" symbol '>=' next to other touchy symbols '=' and '!'");
+   ShouldReportThisError(1, "\"Touchy\" symbol '!=' next to other touchy symbols '=' and '='");
+   ShouldReportThisError(1, "\"Touchy\" symbol '==' next to another touchy symbol '='");
    Lexer_Lex(&lexer.interface, source, &tokens.interface);
    TheResultingTokensShouldBe(expectedTokens, 14);
 }
@@ -342,9 +341,9 @@ TEST(Lexer_Concrete, NoSpaceBetweenIdentifiersNumbersAndTouchySymbolsReportsErro
       { Token_Type_Literal_Number, &source[19], 2, 2 },
    };
 
-   ShouldReportThisError("\"Touchy\" symbol '=' next to another touchy symbol 'm'");
-   ShouldReportThisError("\"Touchy\" symbol '=' next to other touchy symbols 'o' and 'n'");
-   ShouldReportThisError("\"Touchy\" symbol '+' next to other touchy symbols 'm' and '1'");
+   ShouldReportThisError(1, "\"Touchy\" symbol '=' next to another touchy symbol 'm'");
+   ShouldReportThisError(2, "\"Touchy\" symbol '=' next to other touchy symbols 'o' and 'n'");
+   ShouldReportThisError(2, "\"Touchy\" symbol '+' next to other touchy symbols 'm' and '1'");
    Lexer_Lex(&lexer.interface, source, &tokens.interface);
    TheResultingTokensShouldBe(expectedTokens, 8);
 }
@@ -353,12 +352,12 @@ TEST(Lexer_Concrete, ReportsErrorForUnexpectedCharacters)
 {
    const char *source = "%^&\\|;";
 
-   ShouldReportThisError("Unexpected character '%'");
-   ShouldReportThisError("Unexpected character '^'");
-   ShouldReportThisError("Unexpected character '&'");
-   ShouldReportThisError("Unexpected character '\\'");
-   ShouldReportThisError("Unexpected character '|'");
-   ShouldReportThisError("Unexpected character ';'");
+   ShouldReportThisError(1, "Unexpected character '%'");
+   ShouldReportThisError(1, "Unexpected character '^'");
+   ShouldReportThisError(1, "Unexpected character '&'");
+   ShouldReportThisError(1, "Unexpected character '\\'");
+   ShouldReportThisError(1, "Unexpected character '|'");
+   ShouldReportThisError(1, "Unexpected character ';'");
    Lexer_Lex(&lexer.interface, source, &tokens.interface);
 }
 
@@ -395,7 +394,7 @@ TEST(Lexer_Concrete, ReportsErrorForUnexpectedNonPrintableCharacter)
       0x00  // null
    };
 
-   ShouldReportThisErrorNTimes("Unexpected non-printable character", strlen(nonprintables));
+   ShouldReportThisErrorNTimes(1, "Unexpected non-printable character", strlen(nonprintables));
    Lexer_Lex(&lexer.interface, nonprintables, &tokens.interface);
 }
 
@@ -410,7 +409,7 @@ TEST(Lexer_Concrete, ReportsErrorForNonAscii)
    }
    nonascii[128] = '\0';
 
-   ShouldReportThisErrorNTimes("Unexpected non-ascii character", (UCHAR_MAX - SCHAR_MAX));
+   ShouldReportThisErrorNTimes(1, "Unexpected non-ascii character", (UCHAR_MAX - SCHAR_MAX));
    Lexer_Lex(&lexer.interface, nonascii, &tokens.interface);
 }
 

@@ -10,13 +10,14 @@ extern "C"
 #include "util.h"
 }
 
-static void report(I_Error_t *interface, const char *message)
+static void report(I_Error_t *interface, size_t line, const char *message)
 {
    REINTERPRET(instance, interface, Error_Mock_t *);
 
    mock()
       .actualCall("report")
       .onObject(instance)
+      .withParameter("line", line)
       .withParameter("message", message);
 }
 
