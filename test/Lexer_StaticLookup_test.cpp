@@ -5,22 +5,22 @@
 extern "C"
 {
 #include <string.h>
-#include "Lexer_Concrete.h"
+#include "Lexer_StaticLookup.h"
 #include "List_Calloc.h"
 #include "Token.h"
 }
 
-TEST_GROUP(Lexer_Concrete)
+TEST_GROUP(Lexer_StaticLookup)
 {
    Error_Mock_t errorMock;
    List_Calloc_t tokens;
-   Lexer_Concrete_t lexer;
+   Lexer_StaticLookup_t lexer;
 
    void setup()
    {
       Error_Mock_Init(&errorMock);
       List_Calloc_Init(&tokens, sizeof(Token_t));
-      Lexer_Concrete_Init(&lexer, &errorMock.interface);
+      Lexer_StaticLookup_Init(&lexer, &errorMock.interface);
 
       mock().strictOrder();
    }
@@ -70,7 +70,7 @@ TEST_GROUP(Lexer_Concrete)
 /***************************
  * Symbol tokens tests
  ***************************/
-TEST(Lexer_Concrete, RecognizesStringOfNonTouchySymbols)
+TEST(Lexer_StaticLookup, RecognizesStringOfNonTouchySymbols)
 {
    const char *source = "()[]{},.`";
    const Token_t expectedTokens[] = {
@@ -89,7 +89,7 @@ TEST(Lexer_Concrete, RecognizesStringOfNonTouchySymbols)
    TheResultingTokensShouldBe(expectedTokens, 9);
 }
 
-TEST(Lexer_Concrete, RecognizesTouchySymbolsWithSpacesInbetween)
+TEST(Lexer_StaticLookup, RecognizesTouchySymbolsWithSpacesInbetween)
 {
    const char *source = "@ # $ - + / * = < > <= >= != ==";
    const Token_t expectedTokens[] = {
@@ -116,7 +116,7 @@ TEST(Lexer_Concrete, RecognizesTouchySymbolsWithSpacesInbetween)
 /***************************
 * Identifiers
 ***************************/
-TEST(Lexer_Concrete, RecongnizesAllKindsOfStandardIdentifiers)
+TEST(Lexer_StaticLookup, RecongnizesAllKindsOfStandardIdentifiers)
 {
    const char *source = "word _attribute ???????? #-items valid-identifier? t######## ####t";
    const Token_t expectedTokens[] = {
@@ -133,7 +133,7 @@ TEST(Lexer_Concrete, RecongnizesAllKindsOfStandardIdentifiers)
 /***************************
 * Literals
 ***************************/
-TEST(Lexer_Concrete, RecognizesStringLiteral)
+TEST(Lexer_StaticLookup, RecognizesStringLiteral)
 {
    const char *source = "  \"This is a string literal\"";
    const Token_t expectedToken = { Token_Type_Literal_String, &source[2], 26, 1};
@@ -142,7 +142,7 @@ TEST(Lexer_Concrete, RecognizesStringLiteral)
    TheTokenAtThisIndexShouldBe(0, &expectedToken);
 }
 
-TEST(Lexer_Concrete, RecognizesSymbolicLiteral)
+TEST(Lexer_StaticLookup, RecognizesSymbolicLiteral)
 {
    const char *source = ":this-is-a-symbolic-literal?";
    const Token_t expectedToken = { Token_Type_Literal_Symbol, &source[0], 28, 1};
@@ -151,7 +151,7 @@ TEST(Lexer_Concrete, RecognizesSymbolicLiteral)
    TheTokenAtThisIndexShouldBe(0, &expectedToken);
 }
 
-TEST(Lexer_Concrete, RecognizesNumberLiterals)
+TEST(Lexer_StaticLookup, RecognizesNumberLiterals)
 {
    const char *source = "1 2.3 .4 567. 9384573940.2832985723.5432";
    const Token_t expectedTokens[] = {
@@ -171,7 +171,7 @@ TEST(Lexer_Concrete, RecognizesNumberLiterals)
 /***************************
 * Special case characters
 ***************************/
-TEST(Lexer_Concrete, SpecialCase_Dot)
+TEST(Lexer_StaticLookup, SpecialCase_Dot)
 {
    const char *source = ". .. ... .6 ..6 ...";
    const Token_t expectedTokens[] = {
@@ -188,7 +188,7 @@ TEST(Lexer_Concrete, SpecialCase_Dot)
    TheResultingTokensShouldBe(expectedTokens, 6);
 }
 
-TEST(Lexer_Concrete, SpecialCase_Colon)
+TEST(Lexer_StaticLookup, SpecialCase_Colon)
 {
    const char *source = ": :this-is-a-symbolic-literal?:";
    const Token_t expectedTokens[] = {
@@ -201,7 +201,7 @@ TEST(Lexer_Concrete, SpecialCase_Colon)
    TheResultingTokensShouldBe(expectedTokens, 3);
 }
 
-TEST(Lexer_Concrete, SpecialCase_Dash)
+TEST(Lexer_StaticLookup, SpecialCase_Dash)
 {
    const char *source = "-one-name- - another-name";
    const Token_t expectedTokens[] = {
@@ -214,7 +214,7 @@ TEST(Lexer_Concrete, SpecialCase_Dash)
    TheResultingTokensShouldBe(expectedTokens, 3);
 }
 
-TEST(Lexer_Concrete, SpecialCase_Exclamation)
+TEST(Lexer_StaticLookup, SpecialCase_Exclamation)
 {
    const char *source = "!one!name! != another!name";
    const Token_t expectedTokens[] = {
@@ -227,7 +227,7 @@ TEST(Lexer_Concrete, SpecialCase_Exclamation)
    TheResultingTokensShouldBe(expectedTokens, 3);
 }
 
-TEST(Lexer_Concrete, SpecialCase_Pound)
+TEST(Lexer_StaticLookup, SpecialCase_Pound)
 {
    const char *source = "#one#name# # another#name";
    const Token_t expectedTokens[] = {
@@ -240,7 +240,7 @@ TEST(Lexer_Concrete, SpecialCase_Pound)
    TheResultingTokensShouldBe(expectedTokens, 3);
 }
 
-TEST(Lexer_Concrete, SpecialCase_Tilde)
+TEST(Lexer_StaticLookup, SpecialCase_Tilde)
 {
    const char *source = "~one~name~ ~ another~name";
    const Token_t expectedTokens[] = {
@@ -266,7 +266,7 @@ TEST(Lexer_Concrete, SpecialCase_Tilde)
 /***************************
 * Reports Errors
 ***************************/
-TEST(Lexer_Concrete, BadIdentifierNameReportsErrors)
+TEST(Lexer_StaticLookup, BadIdentifierNameReportsErrors)
 {
    const char *source = "____ #### --_- !!";
 
@@ -277,7 +277,7 @@ TEST(Lexer_Concrete, BadIdentifierNameReportsErrors)
    Lexer_Lex(&lexer.interface, source, &tokens.interface);
 }
 
-TEST(Lexer_Concrete, BadSymbolicLiteralNameReportsErrors)
+TEST(Lexer_StaticLookup, BadSymbolicLiteralNameReportsErrors)
 {
    const char *source = ":____ :#### :--_- :!!";
 
@@ -288,7 +288,7 @@ TEST(Lexer_Concrete, BadSymbolicLiteralNameReportsErrors)
    Lexer_Lex(&lexer.interface, source, &tokens.interface);
 }
 
-TEST(Lexer_Concrete, NoSpaceBetweenTouchySymbolsReportsErrors)
+TEST(Lexer_StaticLookup, NoSpaceBetweenTouchySymbolsReportsErrors)
 {
    const char *source = "@#$-+ /*=<><=>=!===";
    const Token_t expectedTokens[] = {
@@ -326,7 +326,7 @@ TEST(Lexer_Concrete, NoSpaceBetweenTouchySymbolsReportsErrors)
    TheResultingTokensShouldBe(expectedTokens, 14);
 }
 
-TEST(Lexer_Concrete, NoSpaceBetweenIdentifiersNumbersAndTouchySymbolsReportsErrors)
+TEST(Lexer_StaticLookup, NoSpaceBetweenIdentifiersNumbersAndTouchySymbolsReportsErrors)
 {
    const char *source = "num= 5\nnum-two=num+10";
    const Token_t expectedTokens[] = {
@@ -348,7 +348,7 @@ TEST(Lexer_Concrete, NoSpaceBetweenIdentifiersNumbersAndTouchySymbolsReportsErro
    TheResultingTokensShouldBe(expectedTokens, 8);
 }
 
-TEST(Lexer_Concrete, ReportsErrorForUnexpectedCharacters)
+TEST(Lexer_StaticLookup, ReportsErrorForUnexpectedCharacters)
 {
    const char *source = "%^&\\|;";
 
@@ -361,7 +361,7 @@ TEST(Lexer_Concrete, ReportsErrorForUnexpectedCharacters)
    Lexer_Lex(&lexer.interface, source, &tokens.interface);
 }
 
-TEST(Lexer_Concrete, ReportsErrorForUnexpectedNonPrintableCharacter)
+TEST(Lexer_StaticLookup, ReportsErrorForUnexpectedNonPrintableCharacter)
 {
    char nonprintables[] = {
       0x01, // start of heading
@@ -398,7 +398,7 @@ TEST(Lexer_Concrete, ReportsErrorForUnexpectedNonPrintableCharacter)
    Lexer_Lex(&lexer.interface, nonprintables, &tokens.interface);
 }
 
-TEST(Lexer_Concrete, ReportsErrorForNonAscii)
+TEST(Lexer_StaticLookup, ReportsErrorForNonAscii)
 {
    unsigned char nonascii[129];
    int i = 0;
@@ -416,7 +416,7 @@ TEST(Lexer_Concrete, ReportsErrorForNonAscii)
 /***************************
  * Counts Line Numbers
  ***************************/
-TEST(Lexer_Concrete, CountsLineNumbers)
+TEST(Lexer_StaticLookup, CountsLineNumbers)
 {
    const char *source = "x: int = 5 \ny: int = 10\n print x + y";
    const Token_t expectedTokens[] = {

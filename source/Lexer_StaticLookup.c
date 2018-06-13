@@ -1,12 +1,12 @@
 /***
- * File: Lexer_Concrete.c
+ * File: Lexer_StaticLookup.c
  */
 
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <ctype.h>
-#include "Lexer_Concrete.h"
+#include "Lexer_StaticLookup.h"
 #include "util.h"
 
 enum
@@ -19,7 +19,7 @@ typedef uint8_t Touchiness_t;
 
 typedef struct
 {
-   void (*what)(Lexer_Concrete_t *instance);
+   void (*what)(Lexer_StaticLookup_t *instance);
    Token_Type_t type;
    Touchiness_t touchiness;
    Token_Type_t digraphType;
@@ -28,56 +28,56 @@ typedef struct
 /*********************************
 * Forward declarations because of circular calls between table and functions
 *********************************/
-static void Colon(Lexer_Concrete_t *instance);
-static void Dash(Lexer_Concrete_t *instance);
-static void DigraphOrSymbol(Lexer_Concrete_t *instance);
-static void Dot(Lexer_Concrete_t *instance);
-static void Exclamation(Lexer_Concrete_t *instance);
-static void Identifier(Lexer_Concrete_t *instance);
-static void Ignore(Lexer_Concrete_t *instance);
-static void IncrementLineCounter(Lexer_Concrete_t *instance);
-static void NumberLiteralOrIdentifier(Lexer_Concrete_t *instance);
-static void Pound(Lexer_Concrete_t *instance);
-static void ReportUnexpectedCharacter(Lexer_Concrete_t *instance);
-static void StringLiteral(Lexer_Concrete_t *instance);
-static void Symbol(Lexer_Concrete_t *instance);
-static void SymbolicLiteral(Lexer_Concrete_t *instance);
-static void Tilde(Lexer_Concrete_t *instance);
+static void Colon(Lexer_StaticLookup_t *instance);
+static void Dash(Lexer_StaticLookup_t *instance);
+static void DigraphOrSymbol(Lexer_StaticLookup_t *instance);
+static void Dot(Lexer_StaticLookup_t *instance);
+static void Exclamation(Lexer_StaticLookup_t *instance);
+static void Identifier(Lexer_StaticLookup_t *instance);
+static void Ignore(Lexer_StaticLookup_t *instance);
+static void IncrementLineCounter(Lexer_StaticLookup_t *instance);
+static void NumberLiteralOrIdentifier(Lexer_StaticLookup_t *instance);
+static void Pound(Lexer_StaticLookup_t *instance);
+static void ReportUnexpectedCharacter(Lexer_StaticLookup_t *instance);
+static void StringLiteral(Lexer_StaticLookup_t *instance);
+static void Symbol(Lexer_StaticLookup_t *instance);
+static void SymbolicLiteral(Lexer_StaticLookup_t *instance);
+static void Tilde(Lexer_StaticLookup_t *instance);
 
 /*********************************
  * Movement through source string
  *********************************/
-static inline char Peek(Lexer_Concrete_t *instance)
+static inline char Peek(Lexer_StaticLookup_t *instance)
 {
    return *instance->current;
 }
 
-static inline char PeekNext(Lexer_Concrete_t *instance)
+static inline char PeekNext(Lexer_StaticLookup_t *instance)
 {
    return (instance->current[1] == '\0') ? ' ' : instance->current[1];
 }
 
-static inline char PeekPrevious(Lexer_Concrete_t *instance)
+static inline char PeekPrevious(Lexer_StaticLookup_t *instance)
 {
    return (instance->current == instance->beginning) ? ' ' : *(instance->current - 1);
 }
 
-static inline char PeekAhead(Lexer_Concrete_t *instance, size_t ahead)
+static inline char PeekAhead(Lexer_StaticLookup_t *instance, size_t ahead)
 {
    return (instance->current[ahead] == '\0') ? ' ' : instance->current[ahead];
 }
 
-static inline void AdvanceOne(Lexer_Concrete_t *instance)
+static inline void AdvanceOne(Lexer_StaticLookup_t *instance)
 {
    instance->current++;
 }
 
-static inline void AdvanceMany(Lexer_Concrete_t *instance, size_t many)
+static inline void AdvanceMany(Lexer_StaticLookup_t *instance, size_t many)
 {
    instance->current += many;
 }
 
-static void AddToken(Lexer_Concrete_t *instance, Token_Type_t type, const char *lexeme, size_t length, size_t line)
+static void AddToken(Lexer_StaticLookup_t *instance, Token_Type_t type, const char *lexeme, size_t length, size_t line)
 {
    instance->token.type = type;
    instance->token.lexeme = lexeme;
@@ -225,18 +225,18 @@ static const CharacterInfo_Entry_t characterInfoTable[128] =
 /*********************************
  * Actions
  *********************************/
-static void Ignore(Lexer_Concrete_t *instance)
+static void Ignore(Lexer_StaticLookup_t *instance)
 {
    AdvanceOne(instance);
 }
 
-static void IncrementLineCounter(Lexer_Concrete_t *instance)
+static void IncrementLineCounter(Lexer_StaticLookup_t *instance)
 {
    instance->line++;
    AdvanceOne(instance);
 }
 
-static void ReportUnexpectedCharacter(Lexer_Concrete_t *instance)
+static void ReportUnexpectedCharacter(Lexer_StaticLookup_t *instance)
 {
    if(iscntrl(Peek(instance)))
    {
@@ -252,7 +252,7 @@ static void ReportUnexpectedCharacter(Lexer_Concrete_t *instance)
    AdvanceOne(instance);
 }
 
-static void Identifier(Lexer_Concrete_t *instance)
+static void Identifier(Lexer_StaticLookup_t *instance)
 {
    const char *beginning = instance->current;
    size_t length = 0;
@@ -279,7 +279,7 @@ static void Identifier(Lexer_Concrete_t *instance)
    }
 }
 
-static void CheckSpacing(Lexer_Concrete_t *instance, uint8_t length)
+static void CheckSpacing(Lexer_StaticLookup_t *instance, uint8_t length)
 {
    char message[66];
    bool touchyOnLeft = characterInfoTable[PeekPrevious(instance)].touchiness == Touchy_Yes;
@@ -302,7 +302,7 @@ static void CheckSpacing(Lexer_Concrete_t *instance, uint8_t length)
    }
 }
 
-static void WideSymbol(Lexer_Concrete_t *instance, uint8_t width, Token_Type_t type, Touchiness_t touchiness)
+static void WideSymbol(Lexer_StaticLookup_t *instance, uint8_t width, Token_Type_t type, Touchiness_t touchiness)
 {
    if(touchiness == Touchy_Yes)
    {
@@ -313,12 +313,12 @@ static void WideSymbol(Lexer_Concrete_t *instance, uint8_t width, Token_Type_t t
    AdvanceMany(instance, width);
 }
 
-static void Symbol(Lexer_Concrete_t *instance)
+static void Symbol(Lexer_StaticLookup_t *instance)
 {
    WideSymbol(instance, 1, characterInfoTable[Peek(instance)].type, characterInfoTable[Peek(instance)].touchiness);
 }
 
-static void DigraphOrSymbol(Lexer_Concrete_t *instance)
+static void DigraphOrSymbol(Lexer_StaticLookup_t *instance)
 {
    if(PeekNext(instance) == '=')
    {
@@ -330,7 +330,7 @@ static void DigraphOrSymbol(Lexer_Concrete_t *instance)
    }
 }
 
-static void NumberLiteralOrIdentifier(Lexer_Concrete_t *instance)
+static void NumberLiteralOrIdentifier(Lexer_StaticLookup_t *instance)
 {
    Token_Type_t type = Token_Type_Literal_Number;
    const char *beginning = instance->current;
@@ -356,7 +356,7 @@ static void NumberLiteralOrIdentifier(Lexer_Concrete_t *instance)
    AddToken(instance, type, beginning, length, instance->line);
 }
 
-static void StringLiteral(Lexer_Concrete_t *instance)
+static void StringLiteral(Lexer_StaticLookup_t *instance)
 {
    const char *beginning = instance->current;
    size_t line = instance->line;
@@ -386,7 +386,7 @@ static void StringLiteral(Lexer_Concrete_t *instance)
    AddToken(instance, Token_Type_Literal_String, beginning, length, instance->line);
 }
 
-static void Exclamation(Lexer_Concrete_t *instance)
+static void Exclamation(Lexer_StaticLookup_t *instance)
 {
    if(PeekNext(instance) == '=')
    {
@@ -398,7 +398,7 @@ static void Exclamation(Lexer_Concrete_t *instance)
    }
 }
 
-static void Pound(Lexer_Concrete_t *instance)
+static void Pound(Lexer_StaticLookup_t *instance)
 {
    if(isalpha(PeekNext(instance))
       || PeekNext(instance) == '_'
@@ -415,7 +415,7 @@ static void Pound(Lexer_Concrete_t *instance)
    }
 }
 
-static void Dot(Lexer_Concrete_t *instance)
+static void Dot(Lexer_StaticLookup_t *instance)
 {
    if(isdigit(PeekNext(instance)))
    {
@@ -443,7 +443,7 @@ static void Dot(Lexer_Concrete_t *instance)
    }
 }
 
-static void Colon(Lexer_Concrete_t *instance)
+static void Colon(Lexer_StaticLookup_t *instance)
 {
    if(isalpha(PeekNext(instance))
       || PeekNext(instance) == '_'
@@ -468,7 +468,7 @@ static void Colon(Lexer_Concrete_t *instance)
    }
 }
 
-static void Dash(Lexer_Concrete_t *instance)
+static void Dash(Lexer_StaticLookup_t *instance)
 {
    if(isalpha(PeekNext(instance))
       || PeekNext(instance) == '_'
@@ -485,13 +485,13 @@ static void Dash(Lexer_Concrete_t *instance)
    }
 }
 
-static void Tilde(Lexer_Concrete_t *instance)
+static void Tilde(Lexer_StaticLookup_t *instance)
 {
    WideSymbol(instance, 1, Token_Type_Identifier, characterInfoTable['~'].touchiness);
 }
 
 // TODO: merge overlap with literal function so there isn't as much copied code
-static void SymbolicLiteral(Lexer_Concrete_t *instance)
+static void SymbolicLiteral(Lexer_StaticLookup_t *instance)
 {
    const char *beginning = instance->current;
    size_t length = 1;
@@ -525,7 +525,7 @@ static void SymbolicLiteral(Lexer_Concrete_t *instance)
  *********************************/
 static void lex(I_Lexer_t *interface, const char *source, I_List_t *tokenList)
 {
-   REINTERPRET(instance, interface, Lexer_Concrete_t *);
+   REINTERPRET(instance, interface, Lexer_StaticLookup_t *);
    instance->beginning = source;
    instance->current = source;
    instance->tokenList = tokenList;
@@ -545,7 +545,7 @@ static void lex(I_Lexer_t *interface, const char *source, I_List_t *tokenList)
    }
 }
 
-void Lexer_Concrete_Init(Lexer_Concrete_t *instance, I_Error_t *errorHandler)
+void Lexer_StaticLookup_Init(Lexer_StaticLookup_t *instance, I_Error_t *errorHandler)
 {
    instance->interface.lex = &lex;
    instance->errorHandler = errorHandler;
