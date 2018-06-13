@@ -15,6 +15,7 @@ typedef struct I_Lexer_t
     * @param source - string of source code characters
     * @param tokens - storage for the tokens
     * @pre - tokens is an empty list
+    * @pre - source points to a valid string
     * @post - tokens that contain strings will point directly to source,
     *          so deallocating source will invalidate the tokens
     */

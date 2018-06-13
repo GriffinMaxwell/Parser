@@ -6,6 +6,8 @@
 #ifndef _I_ERROR_H
 #define _I_ERROR_H
 
+#include <stddef.h>
+
 typedef struct I_Error_t
 {
    /*
@@ -13,10 +15,10 @@ typedef struct I_Error_t
     *
     * @param message - the error message
     */
-   void (*report)(struct I_Error_t *interface, const char *message);
+   void (*report)(struct I_Error_t *interface, size_t line, const char *message);
 } I_Error_t;
 
-#define Error_Report(interface, message) \
-   (interface)->report((interface), (message))
+#define Error_Report(interface, line, message) \
+   (interface)->report((interface), (line), (message))
 
 #endif
