@@ -4,3 +4,5 @@ test/build
 
 # generated files
 *.exe
+*.out
+.project

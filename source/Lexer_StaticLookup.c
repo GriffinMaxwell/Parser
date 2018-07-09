@@ -274,7 +274,7 @@ static void Identifier(Lexer_StaticLookup_t *instance)
    else
    {
       char message[38+length];
-      sprintf(message, "Identifier name missing [a-zA-Z?]: '%.*s'", length, beginning);
+      sprintf(message, "Identifier name missing [a-zA-Z?]: '%.*s'", (int)length, beginning);
       Error_Report(instance->errorHandler, instance->line, message);
    }
 }
@@ -515,7 +515,7 @@ static void SymbolicLiteral(Lexer_StaticLookup_t *instance)
    else
    {
       char message[34+length];
-      sprintf(message, "Symbol name missing [a-zA-Z?]: '%.*s'", length, beginning);
+      sprintf(message, "Symbol name missing [a-zA-Z?]: '%.*s'", (int)length, beginning);
       Error_Report(instance->errorHandler, instance->line, message);
    }
 }
