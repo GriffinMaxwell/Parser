@@ -40,7 +40,11 @@ COMPONENT_NAME = Parser
 TEST_TARGET = test/$(COMPONENT_NAME)_test_target
 
 # Where CppUTest home dir found
-CPPUTEST_HOME = C:/Users/griff/git/cpputest
+ifeq ($(OS),Windows_NT)	## TODO: Super hacky for now
+	CPPUTEST_HOME = C:/Users/griff/git/cpputest
+else
+	CPPUTEST_HOME = /usr/local/Cellar/cpputest/3.8
+endif
 
 # a directory where o and d files go
 CPPUTEST_OBJS_DIR := test/build
@@ -68,6 +72,6 @@ CXXFLAGS += \
 CFLAGS += \
 	-include $(CPPUTEST_HOME)/include/CppUTest/MemoryLeakDetectorMallocMacros.h \
 
-LD_LIBRARIES += -Ltest/lib -lCppUTest -lCppUTestExt -lpthread
+LD_LIBRARIES += -L$(CPPUTETST_HOME) -lCppUTest -lCppUTestExt -lpthread
 
 include test/MakefileWorker.mk
