@@ -72,6 +72,6 @@ CXXFLAGS += \
 CFLAGS += \
 	-include $(CPPUTEST_HOME)/include/CppUTest/MemoryLeakDetectorMallocMacros.h \
 
-LD_LIBRARIES += -L$(CPPUTETST_HOME) -lCppUTest -lCppUTestExt -lpthread
+LD_LIBRARIES += -L$(CPPUTEST_HOME) -lCppUTest -lCppUTestExt -lpthread
 
 include test/MakefileWorker.mk

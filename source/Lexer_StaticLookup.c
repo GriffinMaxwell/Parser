@@ -346,13 +346,12 @@ static void NumberLiteralOrIdentifier(Lexer_StaticLookup_t *instance)
       length++;
    }
 
-   if(!containsDecimalPoint && (PeekNext(instance) == '\'' || PeekNext(instance) == '"'))
+   if(!containsDecimalPoint && (Peek(instance) == '\'' || Peek(instance) == '"'))
    {
       type = Token_Type_Identifier;
       AdvanceOne(instance);
       length++;
    }
-
    AddToken(instance, type, beginning, length, instance->line);
 }
 

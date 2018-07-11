@@ -51,11 +51,14 @@ TEST_GROUP(Lexer_StaticLookup)
          .withParameter("message", message);
    }
 
-   void TheTokenAtThisIndexShouldBe(size_t index, Token_t *expectedToken)
+   void TheTokenAtThisIndexShouldBe(size_t index, const Token_t *expectedToken)
    {
       Token_t *actualToken;
-      List_At(&tokens.interface, index, &actualToken);
-      MEMCMP_EQUAL(expectedToken, actualToken, sizeof(Token_t));
+      List_At(&tokens.interface, index, (void **)&actualToken);
+      CHECK_EQUAL(expectedToken->type, actualToken->type);
+      CHECK_EQUAL(expectedToken->lexeme, actualToken->lexeme);
+      CHECK_EQUAL(expectedToken->length, actualToken->length);
+      CHECK_EQUAL(expectedToken->line, actualToken->line);
    }
 
    void TheResultingTokensShouldBe(const Token_t *expectedTokens, size_t length)
@@ -409,8 +412,8 @@ TEST(Lexer_StaticLookup, ReportsErrorForNonAscii)
    }
    nonascii[128] = '\0';
 
-   ShouldReportThisErrorNTimes(1, "Unexpected non-ascii character", (UCHAR_MAX - SCHAR_MAX));
-   Lexer_Lex(&lexer.interface, nonascii, &tokens.interface);
+   ShouldReportThisErrorNTimes(1, "Unexpected non-ascii character", i);
+   Lexer_Lex(&lexer.interface, (char *)nonascii, &tokens.interface);
 }
 
 /***************************
