@@ -10,7 +10,6 @@ static void GrowList(List_Calloc_t *instance, size_t minNewSize)
 {
    while(instance->allocatedSize < minNewSize)
    {
-      // +1 to solve 0 condition, 3/2 is magic number
       instance->allocatedSize = (instance->allocatedSize + 1) * 3 / 2;
    }
 
