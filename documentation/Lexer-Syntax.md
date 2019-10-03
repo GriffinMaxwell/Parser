@@ -43,11 +43,11 @@ Numbers are numbers. A single decimal point might show up at the start, middle, 
 
 ## Symbol Literals
 
-Symbols are named constants with some underlying global value. They are useful for giving meaningful names to flags, statuses, and enumerations. They are represented with a colon, followed by any valid identifier `:[\w_-#!?]*[\w][\w_#-!?]*`
+Symbols are named constants with some underlying global value. They are useful for giving meaningful names to flags, statuses, and enumerations. They are given in between backticks, and follow similar rules to strings.
 
 ```
-:thisIsAValidSymbol
-:so-is-this
+`thisIsAValidSymbol`
+`so is this`
 ```
 
 # "Symbolic" Tokens
