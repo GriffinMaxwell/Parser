@@ -7,7 +7,7 @@
 static FILE *stream;
 static char buf[BUF_SIZE];
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
    if (argc > 2)
    {

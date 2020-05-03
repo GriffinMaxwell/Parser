@@ -274,7 +274,7 @@ static void Identifier(Lexer_StaticLookup_t *instance)
    else
    {
       char message[38+length];
-      sprintf(message, "Identifier name missing [a-zA-Z?]: '%.*s'", length, beginning);
+      sprintf(message, "Identifier name missing [a-zA-Z?]: '%.*s'", (int)length, beginning);
       Error_Report(instance->errorHandler, instance->line, message);
    }
 }
@@ -346,13 +346,12 @@ static void NumberLiteralOrIdentifier(Lexer_StaticLookup_t *instance)
       length++;
    }
 
-   if(!containsDecimalPoint && (PeekNext(instance) == '\'' || PeekNext(instance) == '"'))
+   if(!containsDecimalPoint && (Peek(instance) == '\'' || Peek(instance) == '"'))
    {
       type = Token_Type_Identifier;
       AdvanceOne(instance);
       length++;
    }
-
    AddToken(instance, type, beginning, length, instance->line);
 }
 
@@ -515,7 +514,7 @@ static void SymbolicLiteral(Lexer_StaticLookup_t *instance)
    else
    {
       char message[34+length];
-      sprintf(message, "Symbol name missing [a-zA-Z?]: '%.*s'", length, beginning);
+      sprintf(message, "Symbol name missing [a-zA-Z?]: '%.*s'", (int)length, beginning);
       Error_Report(instance->errorHandler, instance->line, message);
    }
 }

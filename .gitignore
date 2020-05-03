@@ -4,3 +4,6 @@ test/build
 
 # generated files
 *.exe
+*.out
+.project
+Parser_test_target

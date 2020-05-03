@@ -24,7 +24,7 @@ TEST_GROUP(List_Calloc)
    {
       List_Calloc_Init(&list, sizeof(Item_t));
       readItem = NULL;
-      memset(&dummyItem, 0xAC, ITEM_SIZE);
+      memset((void *)&dummyItem, 0xAC, ITEM_SIZE);
    }
 
    void teardown()
@@ -51,43 +51,43 @@ TEST_GROUP(List_Calloc)
 TEST(List_Calloc, EmptyListReturnsNullAtIndex0)
 {
    AfterSettingTheReadItemToADummyAddress();
-   List_At(&list.interface, 0, &readItem);
+   List_At(&list.interface, 0, (void **)&readItem);
    TheReadItemShouldPointTo(NULL);
 }
 
 TEST(List_Calloc, EmptyListReturnsNullAtIndex100)
 {
    AfterSettingTheReadItemToADummyAddress();
-   List_At(&list.interface, 100, &readItem);
+   List_At(&list.interface, 100, (void **)&readItem);
    TheReadItemShouldPointTo(NULL);
 }
 
 TEST(List_Calloc, ListWithOneAddedItemReturnsThatItemAtIndex0)
 {
-   List_Add(&list.interface, &dummyItem);
-   List_At(&list.interface, 0, &readItem);
+   List_Add(&list.interface, (void *)&dummyItem);
+   List_At(&list.interface, 0, (void **)&readItem);
 
    TheReadItemShouldEqual(dummyItem);
 }
 
 TEST(List_Calloc, ListWithTwoAddedItemsReturnsThatItemAtIndex0and1)
 {
-   List_Add(&list.interface, &dummyItem);
-   List_Add(&list.interface, &dummyItem);
+   List_Add(&list.interface, (void *)&dummyItem);
+   List_Add(&list.interface, (void *)&dummyItem);
 
-   List_At(&list.interface, 0, &readItem);
+   List_At(&list.interface, 0, (void **)&readItem);
    TheReadItemShouldEqual(dummyItem);
 
-   List_At(&list.interface, 1, &readItem);
+   List_At(&list.interface, 1, (void **)&readItem);
    TheReadItemShouldEqual(dummyItem);
 }
 
 TEST(List_Calloc, SetAtHighIndexResizesTheListTo)
 {
-   List_Set(&list.interface, 20, &dummyItem);
-   List_At(&list.interface, 20, &readItem);
+   List_Set(&list.interface, 20, (void *)&dummyItem);
+   List_At(&list.interface, 20, (void **)&readItem);
    TheReadItemShouldEqual(dummyItem);
 
-   List_At(&list.interface, 21, &readItem);
+   List_At(&list.interface, 21, (void **)&readItem);
    TheReadItemShouldPointTo(NULL);
 }

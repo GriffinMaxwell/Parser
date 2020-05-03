@@ -28,12 +28,12 @@ endif
 
 $(BUILD_DIR)/%.d: %.c
 	@$(MKDIR_P) $(dir $@)
-	@$(CPP) $< $(CC_INCL_DIRS) -MM -MT $(@:.d=.o) >$@
+	@$(CPP) -x c $< $(CC_INCL_DIRS) -MM -MT $(@:.d=.o) >$@
 
 $(BUILD_DIR)/%.o: %.c
 	@$(MKDIR_P) $(dir $@)
 	@echo "Compiling $<..."
-	@$(CC) $(CC_INCL_DIRS) -c $< -o $@
+	@$(CC) $(CC_INCL_DIRS) -c -x c $< -o $@
 
 .PHONY: clean
 clean:
